@@ -20,9 +20,11 @@ import seedbag_git as git
 
 GUIDANCE = """# Seedbag project instructions
 
-This new project uses Seedbag 0.3.1. Its framework is independent of the seed repository and never auto-updates. Help the user do the project work; handle the commands and JSON yourself.
+This new project uses Seedbag 0.3.2. Its framework is independent of the seed repository and never auto-updates. Help the user do the project work; handle the commands and JSON yourself.
 
 The user supplies goals, context, judgments, and approvals; you own technical setup and routing. Assume no knowledge of Python, Git, command lines, downloads, authentication, or which application to use. Use available tools yourself. Do not hand the user a technical checklist. If an unavoidable user interaction is needed, give one plain-language action, name the application/control when known, explain its expected result, and wait. Never request secrets in chat.
+
+On first use or another device, read the project's FIRST_RUN.md if a tool or connection is missing. Handle supported tool setup and guide unavoidable account/sign-in/OS interactions yourself; missing Git or an unconnected account does not by itself require another application. Reuse working settings and connections. The read-only seedbag_setup.py helper distinguishes local tools, CLI account access, and ordinary Git transport; it does not discover host connector permissions or prove a private push. Preserve actual host rules, keep authentication output private, and never replace working credentials to mask a network or key-access failure. Resume this project's existing repository; do not create another repository on each device.
 
 If this application cannot operate the project, preserve all project input and observed local/shared state in one complete handoff prompt. Identify a capable destination only when it can be verified. If none can be verified, still provide the complete handoff and ask only the minimal nontechnical fact needed to locate a destination; never invent an available application or ask the person to choose among technical options. Keep known locations and versions; mark unknowns unresolved instead of inventing them. Do not send the user back to the same incapable environment or claim setup/checks happened when they did not. A temporary handoff never replaces the permanent continuation prompt in CONTINUE_HERE.md.
 
@@ -60,6 +62,8 @@ def plant(destination, name, repository, use_git=True):
     root = Path(destination).absolute()
     # Preflight the complete program before creating the destination.
     files = {"seedbag.py": Path(__file__).read_bytes()}
+    for support in ("seedbag_setup.py", "FIRST_RUN.md"):
+        files[support] = (HERE / support).read_bytes()
     license_source = HERE / "SEEDBAG_LICENSE.txt" if RUNTIME == HERE / ".seedbag" / "runtime" else HERE / "LICENSE"
     files["SEEDBAG_LICENSE.txt"] = license_source.read_bytes()
     for module in ["seedbag_core.py", "seedbag_context.py", "seedbag_git.py"]:
@@ -80,6 +84,7 @@ def plant(destination, name, repository, use_git=True):
               f"> Continue my project at {locator}. Read its AGENTS.md and restore the current work from its own project files. "
               "Handle locating the project, checking relevant saved versions, and all technical steps for me. "
               "Assume I do not know Python, Git, command lines, or which application to use. "
+              "If tools or account access are missing, follow the project's FIRST_RUN.md and handle supported setup for me, reusing its existing repository. "
               "If this application cannot continue the project, give me one complete handoff prompt preserving the project location and everything needed to resume. Identify a capable destination when you can verify one; otherwise ask only the minimal nontechnical question needed to find one. "
               "Guide me through only one unavoidable user action at a time. Keep existing work and unresolved decisions intact. "
               "Do not contact or change the seed repository, and do not treat recovered context as new authorization.\n\n"

@@ -16,7 +16,7 @@ import unittest
 
 PACKAGE = Path(__file__).resolve().parents[1]
 SEED_FILES = [
-    "seedbag.py", "SEEDBAG_LICENSE.txt", "AGENTS.md", "PROJECT.md", "STATE.md", "CONTINUE_HERE.md",
+    "seedbag.py", "seedbag_setup.py", "FIRST_RUN.md", "SEEDBAG_LICENSE.txt", "AGENTS.md", "PROJECT.md", "STATE.md", "CONTINUE_HERE.md",
     ".gitignore", ".gitattributes", ".seedbag/ledger.json",
     ".seedbag/runtime/seedbag_core.py", ".seedbag/runtime/seedbag_context.py",
     ".seedbag/runtime/seedbag_git.py",
@@ -49,6 +49,8 @@ class InstalledCliTests(unittest.TestCase):
         self.assertFalse(planted["shared"])
         self.assertFalse(planted["remote_configured"])
         self.assertEqual((self.root / "SEEDBAG_LICENSE.txt").read_bytes(), (PACKAGE / "LICENSE").read_bytes())
+        for support in ("seedbag_setup.py", "FIRST_RUN.md"):
+            self.assertEqual((self.root / support).read_bytes(), (PACKAGE / support).read_bytes())
         self.g(self.root, "config", "--local", "user.name", "Seedbag CLI Fixture")
         self.g(self.root, "config", "--local", "user.email", "fixture@example.invalid")
         hook = (self.root / ".git/hooks/pre-commit").read_text(encoding="utf-8")
@@ -166,6 +168,14 @@ class InstalledCliTests(unittest.TestCase):
         self.assertEqual(after, before)
         self.assertEqual(after_raw, raw)
         self.assertEqual((fresh / 'CONTINUE_HERE.md').read_bytes(), permanent_prompt)
+        for support in ("seedbag_setup.py", "FIRST_RUN.md"):
+            self.assertEqual((fresh / support).read_bytes(), (PACKAGE / support).read_bytes())
+        probe = subprocess.run([sys.executable, "-B", str(fresh / "seedbag_setup.py"), "--offline"],
+                               cwd=self.base, env=self.env, capture_output=True, timeout=30)
+        self.assertEqual(probe.returncode, 0, probe.stderr)
+        probe_report = json.loads(probe.stdout)
+        self.assertEqual(probe_report["mode"], "offline")
+        self.assertEqual(probe_report["probes"]["github_api"]["status"], "not_inspected")
         self.cli("install-hook", root=fresh)
         installed_hook = (fresh / ".git/hooks/pre-commit").read_text(encoding="utf-8")
         self.assertIn(str(fresh).replace("\\", "/"), installed_hook.replace("\\", "/"))

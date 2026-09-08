@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.2
+
+Add a first-time setup route for people without Git, Python, a GitHub account, or an existing connection. The assistant handles supported installation and configuration; the person receives only unavoidable account, consent, or OS actions. Distinguish missing tools, missing credentials, rejected credentials, denied networking, and broken Git transport through a read-only preflight helper. Preserve working connections and host rules. Planted projects carry the guide and helper for later devices and keep their existing repository.
+
+Probe tests and controlled onboarding scenarios are separate from live account sign-in and real private Git publication. See VALIDATION.md for the actual evidence and remaining live-test boundary. Existing projects remain unchanged.
+
 ## 0.3.1
 
 Restore initiation by one copy/paste prompt. The person provides a project name and goals; the assistant handles package retrieval, local setup, private sharing, verification, and application routing. When tools are unavailable, provide a complete handoff prompt and one unavoidable plain-language user action. Preserve opening project details and return a stable, plain-language continuation prompt. Move technical setup instructions behind the assistant-facing entry protocol.

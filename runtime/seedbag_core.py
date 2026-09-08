@@ -17,7 +17,7 @@ import tempfile
 import time
 from contextlib import contextmanager
 
-VERSION = "0.3.1"
+VERSION = "0.3.2"
 LEDGER = ".seedbag/ledger.json"
 ID = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{0,63}$")
 KINDS = {"requirement", "decision", "idea", "fact", "question"}

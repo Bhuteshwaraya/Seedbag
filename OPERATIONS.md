@@ -1,6 +1,8 @@
-# Seedbag 0.3.1 operations — for the assistant
+# Seedbag 0.3.2 operations — for the assistant
 
 The person starts with the creation prompt in README.md. Read START_HERE.md for your setup and routing duties. The commands below are for you to execute through available tools, never a checklist to assign to a person who asked you to handle setup. You also own obtaining the package, locating an available interpreter, Git setup, and a complete handoff when this application lacks the necessary capabilities.
+
+If dependencies or account access are missing, follow FIRST_RUN.md before deciding that a handoff is necessary. The standalone `python -B seedbag_setup.py --offline` discovers local tools without authentication or network calls. `python -B seedbag_setup.py --network --repository https://github.com/OWNER/PROJECT` adds CLI identity and ordinary Git read probes; substitute the actual project URL when continuing an existing project. Exit zero means the probes ran, not that setup succeeded: inspect the JSON statuses and the limits listed in `not_proven`. Host connector permissions remain unknown to this local helper. It never installs, logs in, creates repositories, changes settings, or proves a private push.
 
 This reference is for an assistant operating a **newly planted future project** in an AI application with project-file access and Python execution. The person directing it can speak normally; the assistant handles commands and structured records. Read `AGENTS.md` explicitly if the application does not load it automatically. Translate meaningful input using the person's actual request and existing authorization; recorded provenance is not a repeated permission ritual.
 
@@ -187,7 +189,7 @@ Successful capture/apply/check operations save locally. They do not upload anyth
 For a newly planted project, the first publication needs the complete planted program and state. An illustrative initial file list is:
 
 ```sh
-python seedbag.py publish --message "Initial project checkpoint" --paths seedbag.py SEEDBAG_LICENSE.txt AGENTS.md PROJECT.md STATE.md CONTINUE_HERE.md .gitignore .gitattributes .seedbag/ledger.json .seedbag/runtime/seedbag_core.py .seedbag/runtime/seedbag_context.py .seedbag/runtime/seedbag_git.py
+python seedbag.py publish --message "Initial project checkpoint" --paths seedbag.py seedbag_setup.py FIRST_RUN.md SEEDBAG_LICENSE.txt AGENTS.md PROJECT.md STATE.md CONTINUE_HERE.md .gitignore .gitattributes .seedbag/ledger.json .seedbag/runtime/seedbag_core.py .seedbag/runtime/seedbag_context.py .seedbag/runtime/seedbag_git.py
 ```
 
 Add every registered owner, required input, receipt, and intended domain file that exists in your actual project. This command requires an already configured remote. For later checkpoints, name the intended changed files; already committed unchanged files remain in the staged snapshot. Directories, duplicate paths, unresolved Git conflicts, unrelated pre-staged files, and mismatched staged/working versions of an intended file are refused. Review the index after any failed publication: files may already have been staged or committed locally before a network refusal.
