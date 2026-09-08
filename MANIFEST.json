@@ -17,14 +17,6 @@
       "bytes": 2011,
       "sha256": "1361ad859b30c36720570fda7d098081009710ee9ddb91dd8e4404a5bd25ee78"
     },
-    "assets/continuity-map.svg": {
-      "bytes": 3957,
-      "sha256": "4596825e907bf1e60a7bdccca33e7c14d0e0ac4e6016acbf46162eca3ce17260"
-    },
-    "assets/seedbag-hero.webp": {
-      "bytes": 261362,
-      "sha256": "3c71359cf60de8833d9f32f8502b003919f8c05275786446f67a3f156fb493dc"
-    },
     "CHANGELOG.md": {
       "bytes": 5422,
       "sha256": "dc87cab93e62598b0173c786a000918791c2c8e0b19c316fd1821d139a539548"
@@ -42,8 +34,32 @@
       "sha256": "a43e938522397afcf74cbde121911773051011bf61640028003a9059c183be20"
     },
     "README.md": {
-      "bytes": 5507,
-      "sha256": "fa83b6daba2c035ec2c67f019d1577b700fd3e00e4db0cbab26afbe58affb179"
+      "bytes": 5506,
+      "sha256": "a41361a8994414c743e53d59568a0654305ad42abfcd5e1c2a05e9048990e204"
+    },
+    "START_HERE.md": {
+      "bytes": 19721,
+      "sha256": "f701730246dcc4bccd80adc654e272e12cb4f8e76601205b422daf3b87fb9db3"
+    },
+    "VALIDATION.md": {
+      "bytes": 9440,
+      "sha256": "6861e1a32f33f95e9ca693286a7d177ffbcae1d57bb6c7ab35fa517c47b2b3f8"
+    },
+    "VERSION": {
+      "bytes": 6,
+      "sha256": "d5d1d767be9218f02ebda081a83a2b2fede85055e910e5a94a09329966486fcc"
+    },
+    "assets/continuity-map.svg": {
+      "bytes": 3957,
+      "sha256": "4596825e907bf1e60a7bdccca33e7c14d0e0ac4e6016acbf46162eca3ce17260"
+    },
+    "assets/continuity-tagline.png": {
+      "bytes": 17266,
+      "sha256": "b24716a4b8db8079021fca261b7bc40058865b80915927e9a068aa411797a250"
+    },
+    "assets/seedbag-hero.webp": {
+      "bytes": 261362,
+      "sha256": "3c71359cf60de8833d9f32f8502b003919f8c05275786446f67a3f156fb493dc"
     },
     "runtime/seedbag_context.py": {
       "bytes": 15526,
@@ -64,10 +80,6 @@
     "seedbag_setup.py": {
       "bytes": 16305,
       "sha256": "df2adeda5fd899b7aa83cb8075c9a8d244af8547551110597d26ceae3ad2d05f"
-    },
-    "START_HERE.md": {
-      "bytes": 19721,
-      "sha256": "f701730246dcc4bccd80adc654e272e12cb4f8e76601205b422daf3b87fb9db3"
     },
     "tests/test_cli.py": {
       "bytes": 27755,
@@ -100,14 +112,6 @@
     "validation/tests.txt": {
       "bytes": 17841,
       "sha256": "c449902fce29f226c5dac7643df2182ebe25842e55973e2feebf3cd4050956cd"
-    },
-    "VALIDATION.md": {
-      "bytes": 9440,
-      "sha256": "6861e1a32f33f95e9ca693286a7d177ffbcae1d57bb6c7ab35fa517c47b2b3f8"
-    },
-    "VERSION": {
-      "bytes": 6,
-      "sha256": "d5d1d767be9218f02ebda081a83a2b2fede85055e910e5a94a09329966486fcc"
     }
   },
   "excluded": "MANIFEST.json itself; Python caches; temporary files; private project histories and fixtures"
