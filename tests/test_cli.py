@@ -32,6 +32,7 @@ class InstalledCliTests(unittest.TestCase):
         self.assertTrue(self.base.is_relative_to(workspace))
         self.addCleanup(self.temp.cleanup)
         self.root = self.base / "project"
+        self.remote = self.base / "remote.git"
         empty = self.base / "empty-git-templates"
         empty.mkdir()
         self.env = os.environ.copy()
@@ -43,7 +44,7 @@ class InstalledCliTests(unittest.TestCase):
         })
         for name in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR", "SEEDBAG_INCOMPLETE_CHECKPOINT"):
             self.env.pop(name, None)
-        planted, _ = self.cli("init", str(self.root), "--name", "Disposable offline index", package=True)
+        planted, _ = self.cli("init", str(self.root), "--name", "Disposable offline index", "--repository", self.remote.as_posix(), package=True)
         self.assertTrue(planted["git_initialized"])
         self.assertFalse(planted["shared"])
         self.assertFalse(planted["remote_configured"])
@@ -53,7 +54,6 @@ class InstalledCliTests(unittest.TestCase):
         hook = (self.root / ".git/hooks/pre-commit").read_text(encoding="utf-8")
         self.assertIn(str(self.root).replace("\\", "/"), hook.replace("\\", "/"))
         self.assertNotIn(str(PACKAGE / "runtime").replace("\\", "/"), hook.replace("\\", "/"))
-        self.remote = self.base / "remote.git"
         self.g(self.base, "init", "--bare", "--initial-branch=main", str(self.remote))
         self.g(self.root, "remote", "add", "origin", str(self.remote))
         self.apply_number = 0
@@ -105,6 +105,9 @@ class InstalledCliTests(unittest.TestCase):
         return outcome
 
     def test_capture_rewrite_verification_publish_and_fresh_clone_use_installed_runtime(self):
+        permanent_prompt = (self.root / 'CONTINUE_HERE.md').read_bytes()
+        self.assertIn(self.remote.as_posix().encode('utf-8'), permanent_prompt)
+        self.assertNotIn(b'python seedbag.py', permanent_prompt)
         self.capture("request", "Build an offline alphabetic index. Start with cards. Printing can wait until paper copies are requested.")
         pending, _ = self.cli("doctor", expected=2)
         self.assertFalse(pending["ready"])
@@ -162,6 +165,7 @@ class InstalledCliTests(unittest.TestCase):
         after, after_raw = self.cli("context", root=fresh)
         self.assertEqual(after, before)
         self.assertEqual(after_raw, raw)
+        self.assertEqual((fresh / 'CONTINUE_HERE.md').read_bytes(), permanent_prompt)
         self.cli("install-hook", root=fresh)
         installed_hook = (fresh / ".git/hooks/pre-commit").read_text(encoding="utf-8")
         self.assertIn(str(fresh).replace("\\", "/"), installed_hook.replace("\\", "/"))

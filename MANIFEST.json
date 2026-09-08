@@ -1,5 +1,5 @@
 {
-  "version": "0.3.0",
+  "version": "0.3.1",
   "files": {
     ".gitattributes": {
       "bytes": 73,
@@ -14,36 +14,24 @@
       "sha256": "184fad8a889bb64fc2e04268c923999ccbfbeb7b6d49f22c64483a7043ab5774"
     },
     "AGENTS.md": {
-      "bytes": 1532,
-      "sha256": "1ceebb428f99c13721548201823c2e934503caa5be8a20956fcd6df36fa71197"
+      "bytes": 2011,
+      "sha256": "1361ad859b30c36720570fda7d098081009710ee9ddb91dd8e4404a5bd25ee78"
     },
     "CHANGELOG.md": {
-      "bytes": 964,
-      "sha256": "fe1fdd60def2b27e625fab19f4076f588338762d3b938a4af49c4963bb865e23"
+      "bytes": 1596,
+      "sha256": "39d7ed0684b99f394b8e922d750a140d5331200fe4c86eb84fdc8ba1a7ebae3f"
     },
     "LICENSE": {
       "bytes": 1077,
       "sha256": "3a3d2e05cb70e1aa256a20ee8818d91da74402f70410bab48e4da763eff2797e"
     },
     "OPERATIONS.md": {
-      "bytes": 28121,
-      "sha256": "3fe2e280ba32fb36543b480c74251c870d838839c92139dad9827e7796e47689"
+      "bytes": 28554,
+      "sha256": "41de7130f8b55bd4069080ad399db17f495562def797218ff79744339a6b06c4"
     },
     "README.md": {
-      "bytes": 7268,
-      "sha256": "992eea904770f0bbcdd173743f0c1ea7d316305a8c5a0018994ea3a5ca0ec182"
-    },
-    "START_HERE.md": {
-      "bytes": 1446,
-      "sha256": "8f504a98a434080a18fcbbb29a93b3108d5937a599eb1ced396b3edac97895b2"
-    },
-    "VALIDATION.md": {
-      "bytes": 2299,
-      "sha256": "924df51ce0be542b91d6d1eeeffaa0eebb79a7e6fdaeb1de56793f90cb1674bf"
-    },
-    "VERSION": {
-      "bytes": 6,
-      "sha256": "d915cc95d6ca8f47ae297713ed46d4e5c5d99ddd29fc3c61e263bdf305f2b5b0"
+      "bytes": 1989,
+      "sha256": "9459f56815b13e3a05964dc5e690f50703b63deb9ca1c05baac551f94a7ad563"
     },
     "runtime/seedbag_context.py": {
       "bytes": 15526,
@@ -51,39 +39,51 @@
     },
     "runtime/seedbag_core.py": {
       "bytes": 30086,
-      "sha256": "d2cd3d531f335184364774623c612b759bbdfc199ba906fea9ae0bc5a56704c0"
+      "sha256": "a65f011c231a8ae9d2667e7d962727d3d9f8e230384c334ed59562d1cda2783b"
     },
     "runtime/seedbag_git.py": {
       "bytes": 20641,
       "sha256": "1aa6ff8d873c401568dbc0673a208465eafeb6ebca8282fb6e15ec884caa20df"
     },
     "seedbag.py": {
-      "bytes": 16696,
-      "sha256": "16e6bda4b9823d8a0e4a259f8b3c2dcfe64d03b239e5934679fdb99ff5526c00"
+      "bytes": 19268,
+      "sha256": "16dcf3854976dae8c911bc19c3d669ccf30e5d2e6c2218f1d8e607012ca4493b"
+    },
+    "START_HERE.md": {
+      "bytes": 11211,
+      "sha256": "0f8c976bde43b64d6fab35d080f96d4d3dcf306f18ecfd37d76877a2912bb1b7"
     },
     "tests/test_cli.py": {
-      "bytes": 12652,
-      "sha256": "d760fa6b354b381cfbc0807ba24456bfa5d0bc904e6fd57af950be511383a911"
+      "bytes": 12996,
+      "sha256": "325ee7a6084714f5b01eb906a8e0eed6ab604412f60f20620e4802cfc556f56d"
     },
     "tests/test_context.py": {
-      "bytes": 13071,
-      "sha256": "92b17b1fa3e41eca2ef9ed9e12ec5b020d41d481ae1a671ca7922246e4a5ed46"
+      "bytes": 13076,
+      "sha256": "3edbe32e3be8b0ddaeddadb55f8e1d1de40e9f4530a32e3fe213895c73169415"
     },
     "tests/test_git.py": {
       "bytes": 19677,
       "sha256": "6d4dbe90974ed24331916e618110850389ad13ac391a3e844578cb223e289edd"
     },
     "tests/test_scenarios.py": {
-      "bytes": 22588,
-      "sha256": "282009bca89236754fa52f48bad25582d7d8bc9c5474e9e3c9662361be4f69ee"
+      "bytes": 22593,
+      "sha256": "0a52fe82e2972afc4eea96deb9cebbb1fc2ff88b01ee42ee0fb4e7ce7bdddf4f"
     },
     "validation/tests.json": {
-      "bytes": 1303,
-      "sha256": "1bbf2dc3f30f73af21a28946c28134a17792c204afe38537475a149baa5fe461"
+      "bytes": 1348,
+      "sha256": "830cbff7d2683f3e0c81a757e44770a087f094b0b40357ef8102db4ca0b47fb2"
     },
     "validation/tests.txt": {
       "bytes": 9534,
-      "sha256": "6fd861e97f0529d91a933dcf7a1107ec09d29333f4a33e638e5f8bef7f98174e"
+      "sha256": "86f129f83a779a01e3820224741f1f786ccabae97aa7f82e945b10657272a5c9"
+    },
+    "VALIDATION.md": {
+      "bytes": 3016,
+      "sha256": "7f98b66d9bf3d23bcade583a0a73a2fee59202fca8bd17adf49aaf1d895eead5"
+    },
+    "VERSION": {
+      "bytes": 6,
+      "sha256": "79e3f22ca37c7fdf4c29ae3648d6b008c3cb6547260a453409275470919dc674"
     }
   },
   "excluded": "MANIFEST.json itself; Python caches; temporary files; private project histories and fixtures"

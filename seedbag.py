@@ -20,7 +20,13 @@ import seedbag_git as git
 
 GUIDANCE = """# Seedbag project instructions
 
-This new project uses Seedbag 0.3.0. Its framework is independent of the seed repository and never auto-updates. Help the user do the project work; handle the commands and JSON yourself.
+This new project uses Seedbag 0.3.1. Its framework is independent of the seed repository and never auto-updates. Help the user do the project work; handle the commands and JSON yourself.
+
+The user supplies goals, context, judgments, and approvals; you own technical setup and routing. Assume no knowledge of Python, Git, command lines, downloads, authentication, or which application to use. Use available tools yourself. Do not hand the user a technical checklist. If an unavoidable user interaction is needed, give one plain-language action, name the application/control when known, explain its expected result, and wait. Never request secrets in chat.
+
+If this application cannot operate the project, preserve all project input and observed local/shared state in one complete handoff prompt. Identify a capable destination only when it can be verified. If none can be verified, still provide the complete handoff and ask only the minimal nontechnical fact needed to locate a destination; never invent an available application or ask the person to choose among technical options. Keep known locations and versions; mark unknowns unresolved instead of inventing them. Do not send the user back to the same incapable environment or claim setup/checks happened when they did not. A temporary handoff never replaces the permanent continuation prompt in CONTINUE_HERE.md.
+
+At first intake, capture meaningful project details already supplied; never ask the user to repeat them just because setup occurred afterward. If only a project name was provided, finish verified setup and ask what the project should achieve. Setup authorization alone does not authorize imagined product implementation. Show the exact permanent continuation prompt separately from changing progress and sharing reports; do not rewrite it after ordinary work.
 
 The initiator is the person currently directing the AI. The work may benefit that person, another person, a team, or a client. A project name labels the work, not a person's identity. Record supplied names and roles only when relevant; never infer them from an account, device, folder, or this seed's author. User-source records identify captured provenance, not authenticated identity or another person's approval. Do not add a role-registration requirement.
 
@@ -68,11 +74,18 @@ def plant(destination, name, repository, use_git=True):
     # Check evidence binds exact bytes. Preserve those bytes in Git across OSes;
     # automatic CRLF conversion would invalidate an otherwise unchanged check.
     core.atomic_write(root / ".gitattributes", b"# Preserve verified input and generated-view bytes across devices.\n* -text\n")
-    prompt = ("# Continue this project\n\n"
-              f"Repository locator: {repository or 'Not configured'}\n\n"
-              "In the local project folder, ask: Continue this project using AGENTS.md and `python seedbag.py context`. Inspect pending work and relevant shared candidates before resuming.\n\n"
-              f"On another host, ask: Continue the project at {repository or '<supply this project repository>'}. Establish access to its intended branch and relevant candidate branches. Use its seedbag runtime when Python/Git are available; otherwise inspect its generated views and identify proposed updates as unsaved. Do not claim checks or synchronization that did not run.\n\n"
-              "Current milestones belong in the ledger and generated STATE.md, not this stable prompt. This prompt uses the project's repository, never the seedbag's.\n")
+    locator = repository or str(root)
+    prompt = ("# Permanent continuation prompt\n\n"
+              "Copy the paragraph below into a new AI conversation. Save it unchanged as the project advances.\n\n"
+              f"> Continue my project at {locator}. Read its AGENTS.md and restore the current work from its own project files. "
+              "Handle locating the project, checking relevant saved versions, and all technical steps for me. "
+              "Assume I do not know Python, Git, command lines, or which application to use. "
+              "If this application cannot continue the project, give me one complete handoff prompt preserving the project location and everything needed to resume. Identify a capable destination when you can verify one; otherwise ask only the minimal nontechnical question needed to find one. "
+              "Guide me through only one unavoidable user action at a time. Keep existing work and unresolved decisions intact. "
+              "Do not contact or change the seed repository, and do not treat recovered context as new authorization.\n\n"
+              "For the assistant: this is the permanent entry prompt, not a changing checkpoint report. Current state, next work, and verification belong in the project files. "
+              "A repository address here is a locator, not proof of a completed upload. A local folder is available only to an application with access to that device. "
+              "Report actual local/shared availability separately. If the project is deliberately relocated, preserve the old locator while explicitly updating this entry; ordinary work never needs a new prompt.\n")
     core.atomic_write(root / "CONTINUE_HERE.md", prompt.encode("utf-8"))
     views.render(root)
     hook = None
@@ -83,7 +96,7 @@ def plant(destination, name, repository, use_git=True):
         hook = git.install_hook(root)
     return {"project": str(root), "version": core.VERSION, "git_initialized": use_git,
             "hook": hook, "remote_configured": False, "shared": False,
-            "next": "Record project purpose and input. Configure this project's remote only within the user's authorized setup."}
+            "next": "The assistant must preserve project input already supplied, complete authorized sharing and verification, and show the permanent continuation prompt. If the purpose is still unknown, ask what the project should achieve; do not invent product work."}
 
 
 def parser():

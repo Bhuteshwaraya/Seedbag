@@ -1,4 +1,6 @@
-# Seedbag 0.3.0 operations
+# Seedbag 0.3.1 operations — for the assistant
+
+The person starts with the creation prompt in README.md. Read START_HERE.md for your setup and routing duties. The commands below are for you to execute through available tools, never a checklist to assign to a person who asked you to handle setup. You also own obtaining the package, locating an available interpreter, Git setup, and a complete handoff when this application lacks the necessary capabilities.
 
 This reference is for an assistant operating a **newly planted future project** in an AI application with project-file access and Python execution. The person directing it can speak normally; the assistant handles commands and structured records. Read `AGENTS.md` explicitly if the application does not load it automatically. Translate meaningful input using the person's actual request and existing authorization; recorded provenance is not a repeated permission ritual.
 

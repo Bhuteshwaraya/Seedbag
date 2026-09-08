@@ -21,7 +21,7 @@ class ContextTests(unittest.TestCase):
         (self.root / ".seedbag").mkdir()
         self.ledger = self.root / ".seedbag" / "ledger.json"
         self.ledger.write_bytes(core.canonical({
-            "schema": 1, "seed_version": "0.3.0", "name": "New context trial — résumé",
+            "schema": 1, "seed_version": core.VERSION, "name": "New context trial — résumé",
             "repository": "", "events": [],
         }) + b"\n")
 

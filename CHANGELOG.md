@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+Restore initiation by one copy/paste prompt. The person provides a project name and goals; the assistant handles package retrieval, local setup, private sharing, verification, and application routing. When tools are unavailable, provide a complete handoff prompt and one unavoidable plain-language user action. Preserve opening project details and return a stable, plain-language continuation prompt. Move technical setup instructions behind the assistant-facing entry protocol.
+
+This patch affects future planting only. Existing projects retain their installed runtime. The executable continuity checks remain in place.
+
 ## 0.3.0
 
 First general-purpose public release of Seedbag.

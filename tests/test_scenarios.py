@@ -22,7 +22,7 @@ class ContinuityScenarios(unittest.TestCase):
         self.root = Path(self.tmp.name)
         (self.root / '.seedbag').mkdir()
         self.ledger = self.root / '.seedbag' / 'ledger.json'
-        self.ledger.write_text(json.dumps(dict(schema=1, seed_version='0.3.0',
+        self.ledger.write_text(json.dumps(dict(schema=1, seed_version=core.VERSION,
                                               name='Adversarial trial', repository='', events=[])), encoding='utf-8')
         (self.root / 'input.txt').write_text('original input', encoding='utf-8')
 
