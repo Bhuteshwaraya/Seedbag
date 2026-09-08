@@ -138,12 +138,12 @@
       "sha256": "23f195cd29da5c6383078324f01f22d9b9f6ee650f6a1fc632386a3536246bdd"
     },
     "validation/codex-configuration.json": {
-      "bytes": 760,
-      "sha256": "7e2769f36c123fc66dfc4ce3dad14783033f46a7452ffdadd8510e26fdad3112"
+      "bytes": 742,
+      "sha256": "90156cd0f01301dddd6bbc8196f0ed599189719273bda09a6218399cc7f7ea58"
     },
     "validation/native-host.json": {
-      "bytes": 4371,
-      "sha256": "d0b95df09d6a5e3d7a638522320f00a47ef87baab1f770359e4832903d660cae"
+      "bytes": 4292,
+      "sha256": "8a9bf8d9469c3b9a4aa1dfbdf51ee218ce38bf1ae37e316fc147714ae79d416a"
     },
     "validation/sync-live.json": {
       "bytes": 2697,
