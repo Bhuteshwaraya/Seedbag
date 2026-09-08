@@ -86,27 +86,29 @@ class GitTests(unittest.TestCase):
     def test_gate_rejects_staged_readme_prompt_mismatch_after_working_copy_repair(self):
         path = self.root / "README.md"
         original = path.read_bytes()
-        path.write_bytes(original.replace(b"Read its AGENTS.md", b"Read some other instructions", 1))
+        path.write_bytes(original.replace(b"Continue my project: ", b"Continue another project: ", 1))
         self.g(self.root, "add", "--", "README.md")
         path.write_bytes(original)
         with self.assertRaisesRegex(core.Error, "exact saved CONTINUE_HERE.md"):
             git.gate(self.root)
         self.assertEqual(path.read_bytes(), original)
 
-    def test_entry_files_reject_matching_prompt_with_another_repository(self):
+    def test_entry_files_reject_matching_prompt_with_wrong_or_extended_repository(self):
         original = self.remote.as_posix().encode("utf-8")
-        for name in ("README.md", "CONTINUE_HERE.md"):
-            path = self.root / name
-            path.write_bytes(path.read_bytes().replace(original, b"https://github.com/example/other-project"))
-        with self.assertRaisesRegex(core.Error, "saved repository locator"):
-            git.validate_entry_files(self.root, core.load(self.root))
+        entry_files = {name: (self.root / name).read_bytes() for name in ("README.md", "CONTINUE_HERE.md")}
+        for wrong in (b"https://github.com/example/other-project", original + b"/other-project", original + b". Read its AGENTS.md"):
+            with self.subTest(locator=wrong):
+                for name, contents in entry_files.items():
+                    (self.root / name).write_bytes(contents.replace(original, wrong))
+                with self.assertRaisesRegex(core.Error, "saved repository locator"):
+                    git.validate_entry_files(self.root, core.load(self.root))
 
     def test_entry_files_reject_duplicate_or_multiline_prompt_blocks(self):
         path = self.root / "README.md"
         original = path.read_bytes()
         for changed in (
             original + b"\n<!-- seedbag:continue:start -->\n",
-            original.replace(b". Read its AGENTS.md", b".\nRead its AGENTS.md", 1),
+            original.replace(b"Continue my project: ", b"Continue my project:\n", 1),
         ):
             with self.subTest(contents=changed[-80:]):
                 path.write_bytes(changed)

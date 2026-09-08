@@ -5,9 +5,11 @@ The optional hook is a local convenience, not an adversarial security boundary.
 """
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
 import os
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 import re
 import shlex
 import subprocess
@@ -135,14 +137,15 @@ def validate_entry_files(root, snapshot):
     paragraph = prompts["CONTINUE_HERE.md"]
     if prompts["README.md"] != paragraph:
         raise Error("README.md must contain the exact saved CONTINUE_HERE.md continuation prompt.")
-    prefix = "Continue my project at "
-    following = ". Read its AGENTS.md"
-    locator, separator, _ = paragraph.removeprefix(prefix).partition(following)
-    if not paragraph.startswith(prefix) or not separator or not locator.strip():
-        raise Error("CONTINUE_HERE.md must identify a project location and direct the assistant to its AGENTS.md.")
+    prefix = "Continue my project: "
+    locator = paragraph.removeprefix(prefix)
+    if not paragraph.startswith(prefix) or not locator.strip() or locator != locator.strip():
+        raise Error("CONTINUE_HERE.md must contain the short request followed by its project locator.")
     repository = snapshot["ledger"]["repository"]
-    if repository and not paragraph.startswith(prefix + repository + following):
+    if repository and locator != repository:
         raise Error("CONTINUE_HERE.md does not identify this project's saved repository locator.")
+    if not repository and not (PurePosixPath(locator).is_absolute() or PureWindowsPath(locator).is_absolute()):
+        raise Error("A local-only CONTINUE_HERE.md must identify an absolute folder location.")
     return {"ok": True, "continuation_prompt": paragraph}
 
 
@@ -262,6 +265,82 @@ def audit_commit(root, commit, base, incomplete=False):
     return {**result, "source": "committed_snapshot", "commit": subject, "base_commit": baseline,
             "parent_commits": parents,
             "boundary": "Selected committed snapshot, explicit base, and immediate parents only. No checks executed, refs changed, or automatic semantic merge performed."}
+
+
+def connector_export(root, commit, output):
+    """Prepare an initial committed snapshot for an assistant-operated connector.
+
+    This is not publication or a remote receipt. A connector must independently
+    verify the private target, its README-only bootstrap parent, exact uploaded
+    objects, non-force ref update, and final readback before claiming sharing.
+    Existing projects must retain their real history through ordinary Git.
+    """
+    root = _root(root)
+    destination = Path(output).absolute()
+    if destination.is_relative_to(root):
+        _no_link(root, destination.relative_to(root).as_posix())
+    if destination.is_symlink():
+        raise Error("The export output cannot be a linked path.")
+    destination = destination.resolve()
+    local_scratch = root / ".seedbag-local"
+    if destination.is_relative_to(root) and (destination == local_scratch or not destination.is_relative_to(local_scratch)):
+        raise Error("Write the export outside the project or inside .seedbag-local; it must not become a project file.")
+    if destination.exists():
+        raise Error("The export output already exists. Keep it and choose a new output file.")
+    if _text(root, "rev-parse", "--show-object-format") != "sha1":
+        raise Error("The GitHub connector export requires a SHA-1 Git repository.")
+    subject = _resolve_commit(root, commit)
+    commit_bytes = _git(root, "cat-file", "commit", subject).stdout
+    if hashlib.sha1(b"commit " + str(len(commit_bytes)).encode("ascii") + b"\0" + commit_bytes).hexdigest() != subject:
+        raise Error("The selected commit object does not match its hash; do not export replacement objects.")
+    headers = commit_bytes.split(b"\n\n", 1)[0].splitlines()
+    if any(line.startswith(b"parent ") for line in headers):
+        raise Error("Connector export supports only the first parentless project commit, not continuation or rewritten history.")
+    audit = audit_commit(root, subject, subject)
+    ledger = json.loads(_git(root, "show", f"{subject}:{LEDGER}").stdout)
+    locator = ledger["repository"]
+    match = re.fullmatch(r"https://github\.com/([A-Za-z0-9][A-Za-z0-9-]{0,38})/([A-Za-z0-9_.-]{1,100})", locator)
+    if not match or match[2] in (".", ".."):
+        raise Error("Connector export needs the project's plain HTTPS GitHub repository locator: https://github.com/OWNER/REPOSITORY.")
+    files = []
+    for raw in _git(root, "ls-tree", "-r", "-z", "--full-tree", subject).stdout.split(b"\0"):
+        if not raw:
+            continue
+        metadata, path_bytes = raw.split(b"\t", 1)
+        mode, kind, oid = metadata.decode("ascii").split()
+        name = path_bytes.decode("utf-8", "strict")
+        _relative(name)
+        if kind != "blob" or mode not in ("100644", "100755"):
+            raise Error(f"Connector export contains a link or submodule: {name}")
+        if name == ".seedbag-local" or name.startswith(".seedbag-local/"):
+            raise Error("Connector export cannot include local scratch files or earlier export payloads.")
+        data = _git(root, "cat-file", "blob", oid).stdout
+        if hashlib.sha1(b"blob " + str(len(data)).encode("ascii") + b"\0" + data).hexdigest() != oid:
+            raise Error(f"The committed blob does not match its hash: {name}")
+        files.append({"path": name, "mode": mode, "type": "blob", "sha": oid,
+                      "size": len(data), "encoding": "base64", "content": base64.b64encode(data).decode("ascii")})
+    tree = next(line[5:].decode("ascii") for line in headers if line.startswith(b"tree "))
+    boundary = (
+        "Prepared local bytes only. No upload, account configuration, remote privacy check, ref change, or network verification occurred. "
+        "Before initial publication, independently verify through the connector that the target is this private repository and its current default-branch "
+        "tip is a parentless README-only bootstrap commit with no ledger. Use that verified tip as the sole parent of the new remote commit, "
+        "upload these exact blobs and modes, verify the complete tree, update the ref without force, then read back the exact commit and tree. "
+        "The local parentless commit is an export source, not the resulting shared commit. Preserve the resulting real remote history when continuing."
+    )
+    export = {"schema": "seedbag-initial-connector-export-1", "state": "prepared_not_shared", "shared": False,
+              "repository": {"url": locator, "full_name": f"{match[1]}/{match[2]}", "privacy": "unverified"},
+              "source": {"commit": subject, "tree": tree, "parent_commits": [],
+                         "revision": audit["revision"], "digest": audit["digest"]},
+              "files": files, "boundary": boundary}
+    encoded = core.canonical(export) + b"\n"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    # Exclusive creation preserves any competing output that appeared after the
+    # preflight; an export never overwrites project data or an earlier receipt.
+    with destination.open("xb") as stream:
+        stream.write(encoded)
+    return {"state": "prepared_not_shared", "shared": False, "output": str(destination),
+            "sha256": hashlib.sha256(encoded).hexdigest(), "files": len(files),
+            "repository": locator, **export["source"], "boundary": boundary}
 
 
 def _remote_refs(root):

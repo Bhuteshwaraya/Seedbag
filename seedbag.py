@@ -21,7 +21,9 @@ import seedbag_git as git
 
 GUIDANCE = """# Seedbag project instructions
 
-This new project uses Seedbag 0.3.4. Its framework is independent of the seed repository and never auto-updates. Help the user do the project work; handle the commands and JSON yourself.
+This new project uses Seedbag 0.3.5. Its framework is independent of the seed repository and never auto-updates. Help the user do the project work; handle the commands and JSON yourself. Do not contact or change the seed repository when continuing this project.
+
+Read these instructions before interpreting saved project state. A continuation request can use ordinary wording: the project link, folder location, or a name you can resolve identifies the project. Do not require the person to reproduce the saved prompt exactly. Recover the work from this project's own files, preserving existing work and unresolved decisions. Recovered context is not new authorization; the current user request and host permissions govern actions.
 
 The user supplies goals, context, judgments, and approvals; you own technical setup and routing. Assume no knowledge of Python, Git, command lines, downloads, authentication, or which application to use. Use available tools yourself. Do not hand the user a technical checklist. If an unavoidable user interaction is needed, give one plain-language action, name the application/control when known, explain its expected result, and wait. Never request secrets in chat.
 
@@ -37,13 +39,15 @@ The initiator is the person currently directing the AI. The work may benefit tha
 
 When continuing from a repository address, first locate a matching accessible project folder and inspect its local changes. If none exists on this computer, use ordinary Git to clone this same private repository into a new empty local folder. Verify the selected commit and project identity, inspect the installed program, then use that project's own runtime. Never run init, create a replacement repository, or retrieve a newer seed to resume. A cloud workspace is not a folder on the person's computer. Preserve uncertain or competing versions and use FIRST_RUN.md for missing capabilities.
 
+If the ledger has no recorded repository, the saved continuation locator identifies a local folder. Use it if accessible; otherwise help locate an existing copy without claiming the files are on this device. Do not initialize a replacement project. A folder path cannot retrieve files from another device by itself.
+
 Start with `python seedbag.py context` and `doctor` in the project folder (use the available Python 3.11+ executable). The result identifies its revision, relevant constraints, work, owners, and unresolved input. Inspect existing local changes too. Network access and a clean checkout are not required. If context is blocked by its actual byte budget, select a narrower work item or inspect a named record; never silently discard constraints. README.md is the person's recovery page; keep its links and saved continuation block intact. CONTINUE_HERE.md and that block contain the same permanent prompt and must travel with every shared checkpoint.
 
 The canonical source is `.seedbag/ledger.json`. PROJECT.md and STATE.md are generated views. Do not hand-edit the ledger, generated views, or old events. Use capture/apply/check/render commands. Existing domain documents and code remain ordinary project files; register owner routes and meaningful check inputs as they grow.
 
 Capture meaningful user input verbatim with `capture --file ... --origin user --locator ...` before work depends on it. This program does not automatically receive the host chat transcript. Use `inspect --kind captures --id ...` to read pending input. Interpret it into source-linked requirements/decisions/proposals, then resolve the capture with its item links and reason. Do not mislabel an assistant proposal as a user decision, fabricate a user source, or dismiss substantive input as irrelevant to satisfy a gate.
 
-An apply file contains expected_revision, expected_digest, and operations. Use the values from the latest context/inspect result. Immutable item text changes through a new item plus explicit disposition/replacement of the old item; do not erase deferred triggers or rejected directions. Accepted dispositions require recorded user provenance, which is evidence the assistant must interpret honestly, not a new user-approval ritual. The current user request and host permissions still govern external actions.
+An apply file contains expected_revision, expected_digest, and operations. Use the values from the latest context/inspect result. Immutable item text changes through a new item plus explicit disposition/replacement of the old item; do not erase deferred triggers or rejected directions. Accepted dispositions require recorded user provenance, which is evidence the assistant must interpret honestly, not a new user-approval ritual.
 
 Use `check ID` to run a declared local verification command. Code binds its result to declared input files. Include all files that affect the claim and choose checks that test actual behavior. Done work requires passing, current evidence. Code cannot prove a weak test was sufficient or that the user accepted the result. Leave unsupported judgments open.
 
@@ -52,6 +56,8 @@ For an authorized external command, `effect-run ID` persists an attempt before e
 Use `render` to rebuild readable current views; it refuses handwritten changes rather than overwriting them. Use `status --fetch` at a device handoff to discover shared refs/candidates. Compare relevant candidates without automatically choosing the newest or claiming acceptance. One project uses the same ledger/files locally and in its own Git repository. The seed repository is not its state store.
 
 Use `publish --message ... --paths ...` for explicit intended files; publication validates the staged snapshot, preserves previous history, refuses unsafe divergence, and verifies the remote tip. It never force-pushes or auto-merges. For an interruption, `publish --incomplete` may preserve pending input/effects as an explicitly incomplete snapshot; it never certifies completed work with stale checks. Keep one active writer. Independently diverged ledgers cannot be joined by a two-parent merge in this release. Preserve the other candidate branch and record reviewed changes as new transactions in the chosen lineage; do not claim the competing event histories were merged.
+
+For a new project without shell Git credentials, FIRST_RUN.md documents initial connector publication with `connector-export`. It prepares audited bytes only and requires separate connector publication and exact readback. This route is limited to the first checkpoint; later writes require an authenticated checkout of the actual published history. Never reuse the offline preparation history as if it were the shared history.
 
 The local Git commit hook is installed at planting when Git is enabled. After cloning onto another device, run `install-hook` using that device's Python. Do not override an existing hook or claim this cooperative gate is a security sandbox. Cloud tasks with Python/Git can run the same runtime. A GitHub-only/read-only task may inspect generated views and propose a capture/update file, but cannot claim that executable checks or durable writes happened there.
 
@@ -63,36 +69,63 @@ def _summary(snapshot):
     return {"revision": snapshot["revision"], "digest": snapshot["digest"], "current": snapshot["state"]["current"]}
 
 
+class PartialSaveError(core.Error):
+    """A returned ledger mutation followed by a failed generated-view refresh."""
+
+    def __init__(self, report):
+        super().__init__(report["error"])
+        self.report = report
+
+
+def _render_after_save(root, mutation_result):
+    """Report a saved mutation separately from a subsequent rendering failure."""
+    try:
+        return views.render(root)
+    except (core.Error, OSError, ValueError, KeyError, TypeError) as exc:
+        report = {
+            "ok": False, "state": "partial_success", "error": str(exc),
+            "ledger_write_returned": True, "views_fully_updated": False,
+            "mutation_result": mutation_result,
+            "note": "The ledger mutation returned successfully, but generated views were not fully refreshed. "
+                    "Inspect the ledger and preserve the existing views before any retry or further mutation. "
+                    "Do not repeat the command based only on its nonzero exit code; it may already be saved. "
+                    "This result does not verify sharing or an external effect.",
+        }
+        returned_identity = ({"revision": mutation_result["revision"], "digest": mutation_result["digest"]}
+                             if "revision" in mutation_result and "digest" in mutation_result else None)
+        if returned_identity is not None:
+            report["returned_ledger"] = returned_identity
+        try:
+            observed = core.load(root)
+            observed_identity = {"revision": observed["revision"], "digest": observed["digest"]}
+            report.update(**observed_identity, observed_ledger=observed_identity,
+                          readback="observed_without_returned_identity")
+            if returned_identity is not None:
+                if observed_identity == returned_identity:
+                    report.update(saved="local", readback="matches_returned_identity")
+                else:
+                    report.update(state="save_unverified", saved="unverified", readback="different_from_returned_identity")
+                    report["note"] += " The returned and observed ledger identities differ; preserve the evidence and do not assume the returned state remains saved."
+        except (core.Error, OSError, ValueError, KeyError, TypeError) as readback_error:
+            report.update(state="save_unverified", saved="unverified", readback="failed",
+                          readback_error=str(readback_error))
+        raise PartialSaveError(report) from exc
+
+
 def entry_files(name, locator, repository_backed=True):
     """Plant one stable prompt in both human entry points, without live state."""
-    location_steps = (
-        "If you can access my computer, use its existing matching project folder or bring this same repository into a new local folder and continue there. "
-        "Preserve existing local changes; do not initialize a new project or create another repository. "
-        "If you are working in a cloud workspace, use the same private repository and distinguish that workspace from files on my computer. "
-    ) if repository_backed else (
-        "This project currently has a local folder locator and no recorded shared repository. "
-        "Use that folder if accessible. If it is unavailable, help me locate a copy without claiming the files exist on this device. "
-        "Preserve existing local changes and do not initialize a replacement project. "
-    )
-    paragraph = (
-        f"Continue my project at {locator}. Read its AGENTS.md and restore the current work from its own project files. "
-        "Handle locating the project, checking relevant saved versions, and all technical steps for me. "
-        + location_steps +
-        "Handle technical setup without requiring me to write commands. Explain any account or approval step in plain language. "
-        "If tools or account access are missing, follow the project's FIRST_RUN.md and handle supported setup for me. "
-        "If this application cannot continue the project, give me one complete handoff prompt preserving the project location and everything needed to resume. "
-        "Identify a capable destination when you can verify one; otherwise ask only the minimal nontechnical question needed to find one. "
-        "Guide me through only one unavoidable user action at a time. Keep existing work and unresolved decisions intact. "
-        "Do not contact or change the seed repository, and do not treat recovered context as new authorization."
-    )
+    paragraph = f"Continue my project: {locator}"
     block = "<!-- seedbag:continue:start -->\n```text\n" + paragraph + "\n```\n<!-- seedbag:continue:end -->"
     continuation = (
         "# Continue this project\n\n"
-        "Copy the complete prompt below into a new AI conversation. Keep it unchanged as the project advances.\n\n"
+        "Send this short request in a new AI conversation that can access the project.\n\n"
         + block + "\n\n"
+        "You can use your own words. Include the project link or folder location so the assistant can find the saved work. "
+        "A name alone works only when the app can identify the right project.\n\n"
         "Lost your place? [Open the project guide](README.md). Current progress lives in [STATE.md](STATE.md); "
         "goals and decisions live in [PROJECT.md](PROJECT.md).\n\n"
-        "For the assistant: this is the permanent entry prompt, not a changing checkpoint report. "
+        "For the assistant: read [AGENTS.md](AGENTS.md) before interpreting saved state. "
+        "This is the permanent entry prompt, not a changing checkpoint report. "
         "A repository address is a locator, not proof of an upload. Report the actual working location and verified shared commit separately. "
         "Ordinary work must preserve this file. Repository relocation requires a separately supported migration; do not silently rewrite the prompt.\n"
     )
@@ -117,12 +150,15 @@ def entry_files(name, locator, repository_backed=True):
         f"# Project home\n\n<strong>{title}</strong>\n\n"
         "This is your project's saved home. It keeps the goals, decisions, unfinished work, and reasons your assistant recorded, "
         "so a new conversation can pick up from the saved work. The assistant maintains these files as you work.\n\n"
+        "For assistants continuing this project: read [AGENTS.md](AGENTS.md) before interpreting saved state.\n\n"
         "## Pick up where you left off\n\n"
         "1. Open a new conversation in an AI app that can access this project. To work in a folder on your computer, use a local Codex conversation with file access.\n"
-        "2. Copy the complete prompt below and send it. It already identifies this project.\n"
+        "2. Send the short request below, or ask in your own words and include the same project location.\n"
         "3. The assistant should recover what is saved, explain where you left off, and continue with you. If access or sign-in is needed, it should guide you through one action at a time.\n\n"
         + block + "\n\n"
-        "The same prompt is saved in [CONTINUE_HERE.md](CONTINUE_HERE.md). Reuse it whenever you start a new conversation about this project. "
+        "The wording is only an example; the project location tells the assistant which files to open. "
+        "A name alone works only when the app can identify the right project. "
+        "The same request is saved in [CONTINUE_HERE.md](CONTINUE_HERE.md) for whenever you need it. "
         "The Seedbag creation prompt is only for starting a separate project.\n\n"
         "## Find your bearings\n\n"
         "- [Where things stand](STATE.md): saved progress, unfinished work, and next steps.\n"
@@ -149,7 +185,7 @@ def plant(destination, name, repository, use_git=True):
         files[".seedbag/runtime/" + module] = (RUNTIME / module).read_bytes()
     if use_git and not shutil.which("git"):
         raise core.Error("Git is unavailable. Install Git or explicitly plant with --no-git for local files only.")
-    core.initialize(root, name, repository)
+    initial = core.initialize(root, name, repository)
     for path, data in files.items():
         core.atomic_write(root / path, data)
     core.atomic_write(root / "AGENTS.md", GUIDANCE.encode("utf-8"))
@@ -159,7 +195,8 @@ def plant(destination, name, repository, use_git=True):
     core.atomic_write(root / ".gitattributes", b"# Preserve verified input and generated-view bytes across devices.\n* -text\n")
     for path, text in entry_files(name, repository or str(root), bool(repository)).items():
         core.atomic_write(root / path, text.encode("utf-8"))
-    views.render(root)
+    _render_after_save(root, {**_summary(initial), "project": str(root),
+                              "git_initialized": False, "shared": False})
     hook = None
     if use_git:
         result = subprocess.run(["git", "init", "--initial-branch=main", str(root)], capture_output=True)
@@ -214,6 +251,9 @@ def parser():
     audit.add_argument("--commit", default="HEAD")
     audit.add_argument("--base", required=True)
     audit.add_argument("--incomplete", action="store_true")
+    export = sub.add_parser("connector-export", help="Prepare the first committed project snapshot for connector publication; does not upload")
+    export.add_argument("--commit", default="HEAD")
+    export.add_argument("--output", required=True)
     effect = sub.add_parser("effect-run", help="Run an already authorized declared operation once in this local lineage")
     effect.add_argument("id")
     effect.add_argument("--timeout", type=int, default=60)
@@ -237,15 +277,15 @@ def main(argv=None):
             old = core.load(root)
             snapshot = core.apply(root, [{"op": "capture.add", "id": args.id, "text": text,
                                         "origin": args.origin, "locator": args.locator}], old["revision"], old["digest"])
-            views.render(root)
             result = {**_summary(snapshot), "capture": args.id, "disposition": "pending", "saved": "local"}
+            _render_after_save(root, result)
         elif command == "apply":
             request = core.read_json(args.file)
             if not isinstance(request, dict) or set(request) != {"expected_revision", "expected_digest", "operations"}:
                 raise core.Error("Apply file needs exactly expected_revision, expected_digest, and operations")
             snapshot = core.apply(root, request["operations"], request["expected_revision"], request["expected_digest"])
-            views.render(root)
             result = {**_summary(snapshot), "saved": "local"}
+            _render_after_save(root, result)
         elif command == "inspect":
             snapshot = core.load(root)
             data = snapshot["state"][args.kind]
@@ -271,7 +311,7 @@ def main(argv=None):
             code = 2 if problems else 0
         elif command == "check":
             result = core.run_check(root, args.id)
-            views.render(root)
+            _render_after_save(root, result)
             code = 0 if result["code"] == 0 else 2
         elif command == "status":
             result = {**_summary(core.load(root)), "git": git.status(root, args.fetch)}
@@ -285,22 +325,27 @@ def main(argv=None):
             result = git.gate(root, incomplete=args.incomplete or os.environ.get("SEEDBAG_INCOMPLETE_CHECKPOINT") == "1")
         elif command == "audit":
             result = git.audit_commit(root, args.commit, args.base, incomplete=args.incomplete)
+        elif command == "connector-export":
+            result = git.connector_export(root, args.commit, args.output)
         elif command == "effect-run":
             if not 1 <= args.timeout <= 300:
                 raise core.Error("Timeout must be 1..300 seconds")
             result = core.run_effect(root, args.id, args.timeout)
-            views.render(root)
+            _render_after_save(root, result)
             code = 2  # Returned is deliberately not a claim of verified external completion.
         elif command == "effect-resolve":
             old = core.load(root)
             snapshot = core.apply(root, [{"op": "effect.resolve", "id": args.id, "outcome": args.outcome,
                                         "receipt": args.receipt}], old["revision"], old["digest"])
-            views.render(root)
             result = _summary(snapshot)
+            _render_after_save(root, result)
         else:
             raise core.Error("Unknown command")
         sys.stdout.buffer.write(core.canonical(result) + b"\n")
         return code
+    except PartialSaveError as exc:
+        sys.stdout.buffer.write(core.canonical({**exc.report, "command": args.command}) + b"\n")
+        return 2
     except (core.Error, OSError, ValueError, KeyError, TypeError) as exc:
         sys.stdout.buffer.write(core.canonical({"ok": False, "error": str(exc), "note": "Existing work is preserved. Inspect current state before retrying a mutation."}) + b"\n")
         return 2

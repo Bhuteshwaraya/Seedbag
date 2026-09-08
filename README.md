@@ -21,7 +21,7 @@ Copy this prompt into your AI conversation. Replace **PROJECTNAME** with your pr
 ```text
 Create a new private project called PROJECTNAME with its own private GitHub repository under my account, using https://github.com/Bhuteshwaraya/Seedbag.
 
-Resolve the published v0.3.4 release to one exact commit. Read START_HERE.md there, follow its setup instructions, and use that same commit throughout.
+Resolve the published v0.3.5 release to one exact commit. Read START_HERE.md there, follow its setup instructions, and use that same commit throughout.
 
 If you can access my computer, create the working folder locally. If you have a capable cloud workspace, create the project there and verify its private GitHub checkpoint. Save a continuation prompt that lets a later local conversation retrieve and continue the same project.
 
@@ -32,19 +32,27 @@ This request authorizes the private project setup and necessary supported tool s
 
 The assistant handles Git, Python, and other technical setup. You may need to create an account, sign in, or approve access; it should explain each step when needed.
 
-If a conversation cannot create or save the private repository, it should say setup is incomplete and provide a handoff. That handoff finishes setup elsewhere; it is not yet the permanent prompt for continuing a saved project.
+If repository creation needs an account action, the assistant should guide it and continue. If it still cannot create and save a verified private checkpoint, it should say setup is incomplete and provide a handoff. That handoff finishes setup elsewhere; it is not yet the permanent prompt for continuing a saved project.
 
 ## Continue an existing project
 
-Open **your project's** GitHub front page and copy its continuation prompt into a new conversation. That page also links to the saved goals, decisions, and current progress. The same prompt is saved in `CONTINUE_HERE.md`.
+Tell the assistant to continue your project and include its repository link. For example:
+
+```text
+Continue my project: https://github.com/YOUR-ACCOUNT/YOUR-PROJECT
+```
+
+You can use your own words. The link identifies the project; its README directs the assistant to the instructions and saved work inside. If the assistant already has the project open or can find it among your connected repositories, the project name may be enough.
+
+Your project's GitHub front page saves a ready-to-use request with its actual address, plus links to goals, decisions, and current progress. The same request is saved in `CONTINUE_HERE.md`. You do not need to memorize the operating instructions.
 
 For example, after a capable Work conversation saves the project to GitHub, you can paste its continuation prompt into local Codex. The assistant finds an existing local copy or retrieves the same repository into a local folder, then recovers the saved work.
 
-Each conversation needs suitable tools and account access. A repository connection alone does not give an assistant access to your computer or the ability to run and publish the project.
+Each conversation needs suitable tools and account access. A repository connection alone does not give an assistant access to your computer or the ability to run the project. Some cloud conversations can save their first checkpoint through connected GitHub tools; creating the private repository may still need an account action. The assistant should guide that step and verify the saved files before handing the project over.
 
 ## Current status and limits
 
-Seedbag 0.3.4 is an early release. [The validation record](VALIDATION.md) explains what has been tested and what remains unverified.
+Seedbag 0.3.5 is an early release. [The validation record](VALIDATION.md) explains what has been tested and what remains unverified.
 
 Continuity depends on the assistant capturing important input and interpreting it faithfully. Seedbag does not automatically receive every chat message or recover conversations that were never saved. Changes saved only on one computer are unavailable elsewhere until shared to the private repository. Applications need suitable file access and tools to operate the project.
 

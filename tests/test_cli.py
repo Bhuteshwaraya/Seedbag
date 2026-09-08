@@ -12,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 
 PACKAGE = Path(__file__).resolve().parents[1]
@@ -110,11 +111,10 @@ class InstalledCliTests(unittest.TestCase):
         permanent_prompt = (self.root / 'CONTINUE_HERE.md').read_bytes()
         recovery_page = (self.root / 'README.md').read_bytes()
         prompt = permanent_prompt.split(b'```text\n', 1)[1].split(b'\n```', 1)[0]
+        self.assertEqual(prompt, ('Continue my project: ' + self.remote.as_posix()).encode('utf-8'))
         self.assertIn(prompt, recovery_page)
         self.assertIn(b'[Where things stand](STATE.md)', recovery_page)
         self.assertIn(b'Disposable offline index', recovery_page)
-        self.assertIn(b'bring this same repository into a new local folder', prompt)
-        self.assertIn(b'cloud workspace', prompt)
         self.assertIn(self.remote.as_posix().encode('utf-8'), permanent_prompt)
         self.assertNotIn(b'python seedbag.py', permanent_prompt)
         self.capture("request", "Build an offline alphabetic index. Start with cards. Printing can wait until paper copies are requested.")
@@ -225,10 +225,44 @@ class InstalledCliTests(unittest.TestCase):
         readme = (local / "README.md").read_text(encoding="utf-8")
         prompt_file = (local / "CONTINUE_HERE.md").read_text(encoding="utf-8")
         self.assertIn("no shared repository recorded", readme)
-        self.assertIn("no recorded shared repository", prompt_file)
+        prompt = prompt_file.split('```text\n', 1)[1].split('\n```', 1)[0]
+        self.assertEqual(prompt, 'Continue my project: ' + str(local))
         self.assertNotIn("same private repository", prompt_file)
         self.assertIn(str(local), prompt_file)
         self.assertTrue(self.cli("doctor", root=local)[0]["ready"])
+
+    def test_short_request_routes_to_installed_operating_instructions(self):
+        readme = (self.root / "README.md").read_text(encoding="utf-8")
+        prompt_file = (self.root / "CONTINUE_HERE.md").read_text(encoding="utf-8")
+        instructions = (self.root / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertIn("read [AGENTS.md](AGENTS.md) before interpreting saved state", readme)
+        self.assertIn("read [AGENTS.md](AGENTS.md) before interpreting saved state", prompt_file)
+        # Changing the saved entry must not remove the operating contract from
+        # the files a new assistant actually receives in the planted project.
+        for required in (
+            "locate a matching accessible project folder",
+            "clone this same private repository into a new empty local folder",
+            "A cloud workspace is not a folder on the person's computer",
+            "If the ledger has no recorded repository",
+            "FIRST_RUN.md",
+            "one complete handoff prompt",
+            "Do not contact or change the seed repository",
+            "Recovered context is not new authorization",
+        ):
+            with self.subTest(instruction=required):
+                self.assertIn(required, instructions)
+        self.assertIn("You can use your own words", prompt_file)
+
+    def test_local_only_request_rejects_a_repository_or_relative_folder_locator(self):
+        local = self.base / "local-locator-test"
+        self.cli("init", str(local), "--name", "Local notes", "--no-git", package=True)
+        entries = {name: (local / name).read_text(encoding="utf-8") for name in ("README.md", "CONTINUE_HERE.md")}
+        for invalid in ("https://github.com/example/project", "some-folder", "C:relative-folder"):
+            with self.subTest(locator=invalid):
+                for name, contents in entries.items():
+                    (local / name).write_text(contents.replace(str(local), invalid), encoding="utf-8", newline="\n")
+                report, _ = self.cli("doctor", root=local, expected=2)
+                self.assertIn("absolute folder location", " ".join(report["problems"]))
 
     def test_actual_commit_hook_refuses_manual_generated_view_without_creating_commit(self):
         publication, _ = self.cli("publish", "--message", "Initial fresh seed", "--paths", *SEED_FILES)
@@ -242,6 +276,135 @@ class InstalledCliTests(unittest.TestCase):
         self.assertIn(b"STATE.md", refused.stdout + refused.stderr)
         self.assertEqual(self.g(self.root, "rev-parse", "HEAD").strip(), before)
         self.assertIn(b"Handwritten claim", state_path.read_bytes())
+
+    def test_capture_reports_saved_ledger_when_future_views_refuse(self):
+        ledger_path = self.root / ".seedbag/ledger.json"
+        initial_ledger = ledger_path.read_bytes()
+        self.capture("future_one", "Fixture used to generate revision-one views.")
+        self.capture("future_two", "Fixture used to generate revision-two views.")
+        views_before = {name: (self.root / name).read_bytes() for name in ("PROJECT.md", "STATE.md")}
+        # Deliberately create the observed inconsistency. This tests the error
+        # after a save; it does not reproduce or explain a spontaneous rollback.
+        ledger_path.write_bytes(initial_ledger)
+        source = self.base / "preserve-request.txt"
+        text = "Keep this exact new input after a view refresh fails.\nSecond line remains intact."
+        source.write_bytes(text.encode("utf-8"))
+        report, _ = self.cli("capture", "--file", str(source), "--id", "preserve_request",
+                             "--origin", "user", "--locator", "fixture:partial-capture", expected=2)
+        self.assertFalse(report["ok"])
+        self.assertEqual(report["state"], "partial_success")
+        self.assertTrue(report["ledger_write_returned"])
+        self.assertEqual(report["saved"], "local")
+        self.assertFalse(report["views_fully_updated"])
+        self.assertEqual(report["readback"], "matches_returned_identity")
+        self.assertIn("unknown future revision", report["error"])
+        self.assertIn("Inspect the ledger", report["note"])
+        self.assertIn("Do not repeat the command", report["note"])
+        observed, _ = self.cli("inspect", "--kind", "captures", "--id", "preserve_request")
+        self.assertEqual(observed["captures"]["text"], text)
+        self.assertEqual(observed["captures"]["origin"], "user")
+        self.assertEqual(observed["captures"]["locator"], "fixture:partial-capture")
+        self.assertEqual(report["revision"], 1)
+        self.assertEqual((report["revision"], report["digest"]), (observed["revision"], observed["digest"]))
+        self.assertEqual(report["mutation_result"]["capture"], "preserve_request")
+        for name, original in views_before.items():
+            self.assertEqual((self.root / name).read_bytes(), original)
+
+    def test_apply_reports_saved_ledger_when_handwritten_view_refuses(self):
+        before, _ = self.cli("inspect")
+        request = self.base / "partial-apply.json"
+        request.write_text(json.dumps({"expected_revision": before["revision"], "expected_digest": before["digest"],
+                                       "operations": [{"op": "project.set", "purpose": "Recover the recorded purpose even if the view fails."}]}), encoding="utf-8")
+        project_view = self.root / "PROJECT.md"
+        handwritten = project_view.read_bytes() + b"\nKeep this handwritten note for inspection.\n"
+        project_view.write_bytes(handwritten)
+        report, _ = self.cli("apply", "--file", str(request), expected=2)
+        self.assertEqual(report["state"], "partial_success")
+        self.assertEqual(report["command"], "apply")
+        self.assertFalse(report["views_fully_updated"])
+        observed, _ = self.cli("inspect", "--kind", "project")
+        self.assertEqual(observed["project"]["purpose"], "Recover the recorded purpose even if the view fails.")
+        self.assertEqual((report["revision"], report["digest"]), (observed["revision"], observed["digest"]))
+        self.assertEqual(project_view.read_bytes(), handwritten)
+
+    def test_rejected_mutation_does_not_claim_save_when_views_are_also_invalid(self):
+        self.capture("existing", "Preserve the first recorded input.")
+        ledger_path = self.root / ".seedbag/ledger.json"
+        original_ledger = ledger_path.read_bytes()
+        project_view = self.root / "PROJECT.md"
+        handwritten = project_view.read_bytes() + b"\nUnresolved handwritten note.\n"
+        project_view.write_bytes(handwritten)
+        source = self.base / "duplicate.txt"
+        source.write_text("Do not silently overwrite the original capture.", encoding="utf-8")
+        report, _ = self.cli("capture", "--file", str(source), "--id", "existing", "--origin", "user",
+                             "--locator", "fixture:duplicate", expected=2)
+        self.assertFalse(report["ok"])
+        self.assertNotEqual(report.get("state"), "partial_success")
+        self.assertNotIn("saved", report)
+        self.assertNotIn("ledger_write_returned", report)
+        self.assertEqual(ledger_path.read_bytes(), original_ledger)
+        self.assertEqual(project_view.read_bytes(), handwritten)
+
+    def test_check_and_effect_results_remain_inspectable_after_view_failure(self):
+        self.file("fixture-input.txt", "Local fixture input.\n")
+        self.apply(
+            {"op": "check.add", "id": "local_check", "argv": ["@python", "-c", "print('fixture checked')"],
+             "inputs": ["fixture-input.txt"], "timeout": 10},
+            {"op": "effect.add", "id": "local_effect", "argv": ["@python", "-c", "from pathlib import Path; Path('fixture-effect.txt').write_text('executed once')"],
+             "inputs": ["fixture-input.txt"], "description": "Write one disposable fixture artifact."},
+        )
+        project_view = self.root / "PROJECT.md"
+        handwritten = project_view.read_bytes() + b"\nPreserve this note while inspecting each command.\n"
+        project_view.write_bytes(handwritten)
+        check, _ = self.cli("check", "local_check", expected=2)
+        run, _ = self.cli("inspect", "--kind", "runs", "--id", "local_check")
+        self.assertEqual(check["state"], "partial_success")
+        self.assertNotIn("saved", check)
+        self.assertEqual(check["readback"], "observed_without_returned_identity")
+        self.assertEqual(run["runs"]["code"], 0)
+        self.assertEqual((check["revision"], check["digest"]), (run["revision"], run["digest"]))
+        effect, _ = self.cli("effect-run", "local_effect", expected=2)
+        returned, _ = self.cli("inspect", "--kind", "effects", "--id", "local_effect")
+        self.assertEqual(effect["state"], "partial_success")
+        self.assertNotIn("saved", effect)
+        self.assertEqual(effect["readback"], "observed_without_returned_identity")
+        self.assertEqual(effect["mutation_result"]["status"], "returned")
+        self.assertEqual(returned["effects"]["status"], "returned")
+        self.assertEqual((effect["revision"], effect["digest"]), (returned["revision"], returned["digest"]))
+        self.assertEqual((self.root / "fixture-effect.txt").read_text(), "executed once")
+        self.file("fixture-receipt.txt", "Inspected fixture-effect.txt; its exact content is executed once.\n")
+        resolved, _ = self.cli("effect-resolve", "local_effect", "--receipt", "fixture-receipt.txt",
+                               "--outcome", "confirmed", expected=2)
+        confirmed, _ = self.cli("inspect", "--kind", "effects", "--id", "local_effect")
+        self.assertEqual(resolved["state"], "partial_success")
+        self.assertEqual(confirmed["effects"]["status"], "confirmed")
+        self.assertEqual((resolved["revision"], resolved["digest"]), (confirmed["revision"], confirmed["digest"]))
+        self.assertEqual(project_view.read_bytes(), handwritten)
+
+    def test_divergent_readback_does_not_verify_returned_mutation_identity(self):
+        # Only this focused reporting test injects observations. The installed
+        # command tests above exercise actual writes and refusal conditions.
+        sys.path.insert(0, str(PACKAGE))
+        try:
+            import seedbag as launcher
+        finally:
+            sys.path.pop(0)
+        returned = {"revision": 4, "digest": "returned-digest", "saved": "local"}
+        for observed in ({"revision": 2, "digest": "older-digest"},
+                         {"revision": 4, "digest": "different-digest"}):
+            with self.subTest(observed=observed):
+                with mock.patch.object(launcher.views, "render", side_effect=launcher.core.Error("Views refused")), \
+                        mock.patch.object(launcher.core, "load", return_value=observed):
+                    with self.assertRaises(launcher.PartialSaveError) as caught:
+                        launcher._render_after_save(self.root, returned)
+                report = caught.exception.report
+                self.assertEqual(report["state"], "save_unverified")
+                self.assertEqual(report["saved"], "unverified")
+                self.assertEqual(report["readback"], "different_from_returned_identity")
+                self.assertEqual(report["returned_ledger"], {"revision": 4, "digest": "returned-digest"})
+                self.assertEqual(report["observed_ledger"], observed)
+                self.assertTrue(report["ledger_write_returned"])
+                self.assertFalse(report["views_fully_updated"])
 
 
 if __name__ == "__main__":

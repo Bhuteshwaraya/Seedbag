@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.5
+
+New projects save a short continuation request: `Continue my project: PROJECT-LOCATION`. Ordinary wording is welcome. The README directs the assistant to AGENTS.md, where setup, recovery, local-folder, and authorization instructions live. The saved request remains stable and mechanically tied to the project's locator.
+
+Add `connector-export` for a new project's first parentless checkpoint. It exports audited committed blobs and their exact tree for connected GitHub tools, reports prepared rather than shared state, and leaves remote identity, privacy, non-forced publication, and exact readback explicit. A connector-only environment can use a verified README-only private repository created through an account action or authorized assistance. Later writes use the actual published history through authenticated Git.
+
+Distinguish a saved mutation followed by failed view rendering from a rejected mutation. Partial-save errors report the observed ledger identity and require inspection before retrying. This improves a demonstrated ambiguous result; it does not explain an observed cloud persistence discrepancy.
+
+Existing projects retain their installed files and versions. See VALIDATION.md for the assisted live-test boundaries and remaining limitations.
+
 ## 0.3.4
 
 Add a continuity illustration and a three-step diagram to the front page. Rewrite the page and creation/continuation prompts around the reader's next action, removing design annotations and assumptions about the reader's knowledge.
