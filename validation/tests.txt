@@ -66,21 +66,29 @@ test_running_effect_survives_reload_and_cannot_blindly_repeat (test_scenarios.Co
 test_single_current_account_and_no_completed_next_work (test_scenarios.ContinuityScenarios.test_single_current_account_and_no_completed_next_work) ... ok
 test_stale_revision_and_digest_reject_before_any_write (test_scenarios.ContinuityScenarios.test_stale_revision_and_digest_reject_before_any_write) ... ok
 test_zero_exit_is_not_verified_external_effect (test_scenarios.ContinuityScenarios.test_zero_exit_is_not_verified_external_effect) ... ok
+test_action_guidance_limits_repairs_and_avoids_protocol_switches (test_setup.SetupTests.test_action_guidance_limits_repairs_and_avoids_protocol_switches) ... ok
 test_actual_http_401_is_bad_credentials (test_setup.SetupTests.test_actual_http_401_is_bad_credentials) ... ok
 test_api_access_denial_and_rate_limits_are_not_credentials (test_setup.SetupTests.test_api_access_denial_and_rate_limits_are_not_credentials) ... ok
+test_api_failure_actions_distinguish_rejection_from_connection_faults (test_setup.SetupTests.test_api_failure_actions_distinguish_rejection_from_connection_faults) ... ok
 test_cli_default_and_offline_exit_zero_with_single_json (test_setup.SetupTests.test_cli_default_and_offline_exit_zero_with_single_json) ... ok
 test_git_network_and_authentication_failures_differ (test_setup.SetupTests.test_git_network_and_authentication_failures_differ) ... ok
 test_invalid_identity_body_is_not_reprinted (test_setup.SetupTests.test_invalid_identity_body_is_not_reprinted) ... ok
 test_invalid_timeout_is_rejected_before_probes (test_setup.SetupTests.test_invalid_timeout_is_rejected_before_probes) ... ok
+test_missing_cli_auth_recommends_inspection_without_automatic_login (test_setup.SetupTests.test_missing_cli_auth_recommends_inspection_without_automatic_login) ... ok
 test_missing_gh_is_optional_for_local_probes (test_setup.SetupTests.test_missing_gh_is_optional_for_local_probes) ... ok
 test_missing_git_and_gh_are_reports_not_crashes (test_setup.SetupTests.test_missing_git_and_gh_are_reports_not_crashes) ... ok
 test_missing_readable_auth_does_not_request_login (test_setup.SetupTests.test_missing_readable_auth_does_not_request_login) ... ok
 test_network_and_tls_failures_are_not_expired_auth (test_setup.SetupTests.test_network_and_tls_failures_are_not_expired_auth) ... ok
 test_network_requires_explicit_repository_before_any_probe (test_setup.SetupTests.test_network_requires_explicit_repository_before_any_probe) ... ok
+test_offline_actions_only_cover_observed_local_tools (test_setup.SetupTests.test_offline_actions_only_cover_observed_local_tools) ... ok
 test_offline_only_discovers_versions (test_setup.SetupTests.test_offline_only_discovers_versions) ... ok
 test_old_python_is_reported_as_unsupported (test_setup.SetupTests.test_old_python_is_reported_as_unsupported) ... ok
+test_specific_transport_categories_outrank_secondary_authentication_failures (test_setup.SetupTests.test_specific_transport_categories_outrank_secondary_authentication_failures) ... ok
+test_specific_transport_faults_preserve_credentials_and_never_emit_diagnostics (test_setup.SetupTests.test_specific_transport_faults_preserve_credentials_and_never_emit_diagnostics) ... ok
+test_success_recommends_reuse_and_remaining_private_verification_only (test_setup.SetupTests.test_success_recommends_reuse_and_remaining_private_verification_only) ... ok
 test_successful_read_does_not_fail_on_stderr_warning (test_setup.SetupTests.test_successful_read_does_not_fail_on_stderr_warning) ... ok
 test_timeout_and_execution_errors_never_emit_exception (test_setup.SetupTests.test_timeout_and_execution_errors_never_emit_exception) ... ok
+test_transport_categories_require_specific_evidence_and_service (test_setup.SetupTests.test_transport_categories_require_specific_evidence_and_service) ... ok
 test_transport_environment_preserves_config (test_setup.SetupTests.test_transport_environment_preserves_config) ... ok
 test_unavailable_gh_leaves_successful_network_probe_incomplete (test_setup.SetupTests.test_unavailable_gh_leaves_successful_network_probe_incomplete) ... ok
 test_unreadable_ssh_key_outranks_publickey_failure (test_setup.SetupTests.test_unreadable_ssh_key_outranks_publickey_failure) ... ok
@@ -89,6 +97,6 @@ test_url_allowlist_rejects_credentials_and_arbitrary_targets (test_setup.SetupTe
 test_working_probes_still_require_assistant_judgment (test_setup.SetupTests.test_working_probes_still_require_assistant_judgment) ... ok
 
 ----------------------------------------------------------------------
-Ran 89 tests in 90.289s
+Ran 97 tests in 89.929s
 
 OK

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.4
+
+Add a continuity illustration and a three-step diagram to the front page. Rewrite the page and creation/continuation prompts around the reader's next action, removing design annotations and assumptions about the reader's knowledge.
+
+Reuse verified device-level Git setup across tasks. First-run guidance now covers the intended credential owner, fresh-context verification, local setup notes, and narrowly scoped diagnosis. The read-only helper distinguishes helper, ownership, host-key, key-format, permission, authentication, and network failures and returns fixed next-action guidance. It performs no new probes or automatic repairs.
+
+Check whether a cloud workspace has a usable private creation/publication route before full package acquisition or unnecessary tool installation. An incomplete setup handoff is explicitly distinguished from continuing a saved project. No existing project or host configuration is upgraded.
+
 ## 0.3.3
 
 Let a capable cloud conversation create and verify a private GitHub checkpoint before the project has a folder on the person's computer. The permanent continuation prompt now directs a local assistant to reuse an existing matching folder or clone the same repository, then continue from its own installed files. Setup guides distinguish cloud workspace, computer-local files, and verified shared checkpoints.

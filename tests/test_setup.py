@@ -58,6 +58,31 @@ class SetupTests(unittest.TestCase):
         self.assertIn("private_repository_push_permission", report["not_proven"])
         self.assertEqual(len(calls), 5)
 
+    def action_ids(self, report):
+        actions = report["recommended_actions"]
+        self.assertTrue(all(set(action) == {"id", "message"} for action in actions))
+        self.assertEqual(len(actions), len({action["id"] for action in actions}))
+        for action in actions:
+            self.assertEqual(action["message"], setup.ACTION_MESSAGES[action["id"]])
+        return [action["id"] for action in actions]
+
+    def test_success_recommends_reuse_and_remaining_private_verification_only(self):
+        report, calls = self.run_case()
+        self.assertEqual(self.action_ids(report), ["reuse_available_tools", "reuse_authenticated_connection",
+                                                 "reuse_working_transport", "verify_private_publication"])
+        self.assertEqual(len(calls), 5)
+
+    def test_offline_actions_only_cover_observed_local_tools(self):
+        for absent, expected in (((), ["reuse_available_tools"]), (("gh",), ["reuse_available_tools"]),
+                                 (("git", "gh"), ["reuse_available_tools", "supply_missing_git"])):
+            with self.subTest(absent=absent):
+                report, calls = self.run_case(absent=absent, network=False)
+                self.assertEqual(self.action_ids(report), expected)
+                self.assertTrue(all(argv[1:] == ["--version"] for argv, _ in calls))
+        with patch.object(setup.sys, "version_info", (3, 10, 14)):
+            report, _ = self.run_case(network=False, absent=("git", "gh"))
+        self.assertEqual(self.action_ids(report), ["supply_supported_python", "supply_missing_git"])
+
     def test_missing_git_and_gh_are_reports_not_crashes(self):
         for absent in (("git",), ("gh",), ("git", "gh")):
             with self.subTest(absent=absent):
@@ -119,6 +144,76 @@ class SetupTests(unittest.TestCase):
         report, _ = self.run_case(git_code=128, git_error='Load key "private/path/' + SECRET + '": Permission denied\nPermission denied (publickey).')
         self.assertEqual(report["probes"]["git_transport"]["status"], "transport_access_blocked")
         self.assertEqual(report["probes"]["github_api"]["status"], "authenticated")
+
+    def test_specific_transport_faults_preserve_credentials_and_never_emit_diagnostics(self):
+        cases = (
+            ('fatal: detected dubious ownership in repository at "' + SECRET + '"', "repository_ownership_untrusted", "verify_repository_ownership"),
+            ("Host key verification failed. " + SECRET, "ssh_host_verification_failed", "verify_ssh_host"),
+            ("WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED! " + SECRET, "ssh_host_verification_failed", "verify_ssh_host"),
+            ('Load key "' + SECRET + '": invalid format\nPermission denied (publickey).', "transport_key_invalid", "inspect_key_format"),
+            ('Load key "' + SECRET + '": Permission denied\nPermission denied (publickey).', "transport_access_blocked", "verify_key_access"),
+            ('error: cannot spawn git-credential-manager: No such file or directory ' + SECRET, "transport_helper_failed", "inspect_git_helper"),
+            ('error: git-remote-https died of signal 11 ' + SECRET, "transport_helper_failed", "inspect_git_helper"),
+            ('git-remote-https.exe access violation 0xC0000005 ' + SECRET, "transport_helper_failed", "inspect_git_helper"),
+            ("fatal: unable to find remote helper for 'https' " + SECRET, "transport_helper_failed", "inspect_git_helper"),
+        )
+        for message, category, action in cases:
+            with self.subTest(category=category, message=message):
+                report, calls = self.run_case(git_code=128, git_error=message)
+                self.assertEqual(report["probes"]["git_transport"]["status"], category)
+                self.assertEqual(self.action_ids(report), ["reuse_available_tools", "reuse_authenticated_connection",
+                                                          "preserve_credentials", action])
+                self.assertEqual(len(calls), 5)
+                self.assertNotIn(SECRET, json.dumps(report))
+
+    def test_transport_categories_require_specific_evidence_and_service(self):
+        for message in ("permission denied " + SECRET, "invalid format " + SECRET,
+                        "cannot spawn unknown-tool " + SECRET, "helper output " + SECRET,
+                        "git-remote-https reported an unknown failure " + SECRET):
+            with self.subTest(message=message):
+                self.assertEqual(setup.classify_error(message, "git"), "transport_error_unknown")
+        self.assertEqual(setup.classify_error("Host key verification failed", "api"), "api_error_unknown")
+        self.assertEqual(setup.classify_error("git-remote-https died of signal 11", "api"), "api_error_unknown")
+
+    def test_specific_transport_categories_outrank_secondary_authentication_failures(self):
+        for message, expected in (("Host key verification failed", "ssh_host_verification_failed"),
+                                  ("fatal: detected dubious ownership in repository", "repository_ownership_untrusted"),
+                                  ("git-remote-https died of signal 11", "transport_helper_failed")):
+            self.assertEqual(setup.classify_error(message + "\nAuthentication failed\nPermission denied (publickey)", "git"), expected)
+
+    def test_action_guidance_limits_repairs_and_avoids_protocol_switches(self):
+        report, _ = self.run_case(git_code=128, git_error='Load key "' + SECRET + '": Permission denied')
+        action = report["recommended_actions"][-1]
+        self.assertEqual(action["id"], "verify_key_access")
+        self.assertIn("intended user before", action["message"])
+        self.assertIn("exact-file", action["message"])
+        self.assertIn("approval route", action["message"])
+        report, _ = self.run_case(git_code=128, git_error="connection timed out " + SECRET)
+        action = report["recommended_actions"][-1]
+        self.assertEqual(action["id"], "resolve_network_failure")
+        self.assertIn("do not change the connection protocol automatically", action["message"])
+        self.assertNotIn("SSH", action["message"])
+
+    def test_api_failure_actions_distinguish_rejection_from_connection_faults(self):
+        for message, expected in (("HTTP 401 Bad credentials", "renew_rejected_connection"),
+                                  ("HTTP 403 Forbidden", "check_api_access"),
+                                  ("HTTP 429 rate limit", "respect_api_rate_limit"),
+                                  ("connectex forbidden socket", "resolve_network_access"),
+                                  ("x509 certificate error", "verify_tls")):
+            with self.subTest(expected=expected):
+                report, calls = self.run_case(api_code=1, api_error=message + " " + SECRET)
+                actions = self.action_ids(report)
+                self.assertIn(expected, actions)
+                self.assertEqual("renew_rejected_connection" in actions, expected == "renew_rejected_connection")
+                self.assertEqual("preserve_credentials" in actions, expected != "renew_rejected_connection")
+                self.assertEqual(len(calls), 5)
+
+    def test_missing_cli_auth_recommends_inspection_without_automatic_login(self):
+        for kwargs in ({"absent": ("gh",)}, {"token_code": 1}):
+            report, calls = self.run_case(**kwargs)
+            self.assertEqual(self.action_ids(report), ["reuse_available_tools", "inspect_existing_connection",
+                                                     "reuse_working_transport", "verify_private_publication"])
+            self.assertFalse(any(argv[1:3] == ["auth", "login"] or argv[1] == "config" for argv, _ in calls))
 
     def test_git_network_and_authentication_failures_differ(self):
         for message, status in (("ssh: connect to host ssh.github.com port 443: Permission denied", "network_access_blocked"),

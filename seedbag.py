@@ -21,11 +21,13 @@ import seedbag_git as git
 
 GUIDANCE = """# Seedbag project instructions
 
-This new project uses Seedbag 0.3.3. Its framework is independent of the seed repository and never auto-updates. Help the user do the project work; handle the commands and JSON yourself.
+This new project uses Seedbag 0.3.4. Its framework is independent of the seed repository and never auto-updates. Help the user do the project work; handle the commands and JSON yourself.
 
 The user supplies goals, context, judgments, and approvals; you own technical setup and routing. Assume no knowledge of Python, Git, command lines, downloads, authentication, or which application to use. Use available tools yourself. Do not hand the user a technical checklist. If an unavoidable user interaction is needed, give one plain-language action, name the application/control when known, explain its expected result, and wait. Never request secrets in chat.
 
 On first use or another device, read the project's FIRST_RUN.md if a tool or connection is missing. Handle supported tool setup and guide unavoidable account/sign-in/OS interactions yourself; missing Git or an unconnected account does not by itself require another application. Reuse working settings and connections. The read-only seedbag_setup.py helper distinguishes local tools, CLI account access, and ordinary Git transport; it does not discover host connector permissions or prove a private push. Preserve actual host rules, keep authentication output private, and never replace working credentials to mask a network or key-access failure. Resume this project's existing repository; do not create another repository on each device.
+
+Consult existing device-wide setup instructions before repeating account setup. Use the helper's recommended_actions to focus on observed failures; they are guidance, not permission to change the host. A working connection needs a narrow recheck, not another installation or sign-in. Follow FIRST_RUN.md for durable device notes, execution ownership, and verification from a fresh supported context. Keep device-specific credentials and configuration outside shared project files.
 
 If this application cannot operate the project, preserve all project input and observed local/shared state in one complete handoff prompt. Identify a capable destination only when it can be verified. If none can be verified, still provide the complete handoff and ask only the minimal nontechnical fact needed to locate a destination; never invent an available application or ask the person to choose among technical options. Keep known locations and versions; mark unknowns unresolved instead of inventing them. Do not send the user back to the same incapable environment or claim setup/checks happened when they did not. A temporary handoff never replaces the permanent continuation prompt in CONTINUE_HERE.md.
 
@@ -76,7 +78,7 @@ def entry_files(name, locator, repository_backed=True):
         f"Continue my project at {locator}. Read its AGENTS.md and restore the current work from its own project files. "
         "Handle locating the project, checking relevant saved versions, and all technical steps for me. "
         + location_steps +
-        "Assume I do not know Python, Git, command lines, or which application to use. "
+        "Handle technical setup without requiring me to write commands. Explain any account or approval step in plain language. "
         "If tools or account access are missing, follow the project's FIRST_RUN.md and handle supported setup for me. "
         "If this application cannot continue the project, give me one complete handoff prompt preserving the project location and everything needed to resume. "
         "Identify a capable destination when you can verify one; otherwise ask only the minimal nontechnical question needed to find one. "
@@ -114,7 +116,7 @@ def entry_files(name, locator, repository_backed=True):
     readme = (
         f"# Project home\n\n<strong>{title}</strong>\n\n"
         "This is your project's saved home. It keeps the goals, decisions, unfinished work, and reasons your assistant recorded, "
-        "so a new conversation can pick up from the saved work. You do not need to maintain these files or know any programming commands.\n\n"
+        "so a new conversation can pick up from the saved work. The assistant maintains these files as you work.\n\n"
         "## Pick up where you left off\n\n"
         "1. Open a new conversation in an AI app that can access this project. To work in a folder on your computer, use a local Codex conversation with file access.\n"
         "2. Copy the complete prompt below and send it. It already identifies this project.\n"
@@ -126,8 +128,7 @@ def entry_files(name, locator, repository_backed=True):
         "- [Where things stand](STATE.md): saved progress, unfinished work, and next steps.\n"
         "- [What this project is for](PROJECT.md): recorded goals, decisions, requirements, and open questions.\n"
         "- [The saved continuation prompt](CONTINUE_HERE.md): your way back from another chat or device.\n\n"
-        "If the purpose is still unspecified, it has not been recorded yet. Tell the assistant what you want the project to achieve. "
-        "You can also tell it when something is missing or wrong; it should preserve your correction in the records.\n\n"
+        "If anything is missing or wrong, tell the assistant so it can update the records.\n\n"
         "## Where your work lives\n\n"
         + storage +
         "Assistant references: [project instructions](AGENTS.md), [setup and device handoff](FIRST_RUN.md). "

@@ -1,25 +1,25 @@
 {
-  "version": "0.3.3",
+  "version": "0.3.4",
   "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
   "platform": "Windows-11-10.0.26200-SP0",
   "git": "git version 2.53.0.windows.3",
-  "tests_run": 89,
+  "tests_run": 97,
   "failures": 0,
   "errors": 0,
   "skipped": 0,
   "successful": true,
-  "elapsed_seconds": 90.289,
+  "elapsed_seconds": 89.929,
   "code_sha256": {
     "runtime/seedbag_context.py": "4902f4c90e8e771d29613bf76efcc3696008e0f765b5ddcbfe9bed6fc5ee4654",
-    "runtime/seedbag_core.py": "f0d76d368d173be4e1c5f0b11b9224cc6edf3ac912bd7e4529e513d963125d21",
+    "runtime/seedbag_core.py": "18ba073171ef0788db179212b5c143c7a51c5018700b8068640d48a966abe533",
     "runtime/seedbag_git.py": "69de3c016dd48a1870321dab586690dac693575f2adca7c50ebc47b08525213a",
-    "seedbag.py": "338aec0842ed1018a28650a6e9831acadf462bf42cb640959ffc7573a597ea0a",
-    "seedbag_setup.py": "af5888f57d8a5d19fa6904f3ac2cff1bfa27b02f4e4db6187ebef38715c39ad9",
+    "seedbag.py": "99264867778f99efd5e660bcb67f4f9fbdad23b49c9ce0260d11eb43623b6903",
+    "seedbag_setup.py": "df2adeda5fd899b7aa83cb8075c9a8d244af8547551110597d26ceae3ad2d05f",
     "tests/test_cli.py": "9361f7cf62057bda68ea26fc5f226db08d347934b9c04c8c2d4313de437defd7",
     "tests/test_context.py": "3edbe32e3be8b0ddaeddadb55f8e1d1de40e9f4530a32e3fe213895c73169415",
     "tests/test_git.py": "fd1f59bf9258ef335a4d7c679e3131121fb10c197721a3abb47e4f775c8a1eac",
     "tests/test_scenarios.py": "0a52fe82e2972afc4eea96deb9cebbb1fc2ff88b01ee42ee0fb4e7ce7bdddf4f",
-    "tests/test_setup.py": "553a0db8ae79cb31863c190092611981cb8ad02fafdeafca48cbc9422336951c"
+    "tests/test_setup.py": "230e0bdb9fac5d4343b695adbda319d9e4082e91b5d68d6d8851e2d9b839713b"
   },
   "boundary": "Synthetic automated fixtures and local bare Git remotes. Includes continuation prompt stability through state changes and a fresh clone. Conversational setup behavior is reviewed separately; no universal model compliance is claimed."
 }

@@ -1,8 +1,10 @@
-# Seedbag 0.3.3 operations — for the assistant
+# Seedbag 0.3.4 operations — for the assistant
 
 The person starts with the creation prompt in README.md. Read START_HERE.md for your setup and routing duties. The commands below are for you to execute through available tools, never a checklist to assign to a person who asked you to handle setup. You also own obtaining the package, locating an available interpreter, Git setup, and a complete handoff when this application lacks the necessary capabilities.
 
 If dependencies or account access are missing, follow FIRST_RUN.md before deciding that a handoff is necessary. The standalone `python -B seedbag_setup.py --offline` discovers local tools without authentication or network calls. `python -B seedbag_setup.py --network --repository https://github.com/OWNER/PROJECT` adds CLI identity and ordinary Git read probes; substitute the actual project URL when continuing an existing project. Exit zero means the probes ran, not that setup succeeded: inspect the JSON statuses and the limits listed in `not_proven`. Host connector permissions remain unknown to this local helper. It never installs, logs in, creates repositories, changes settings, or proves a private push.
+
+Its `recommended_actions` field contains fixed `{id, message}` guidance derived from those observations. Successful probes recommend reusing the connection; failed probes point to the failing layer without returning raw diagnostics. FIRST_RUN.md describes how to keep verified device setup available across future tasks. These are local host instructions and records, not project credentials or a new authentication service.
 
 This reference is for an assistant operating a **newly planted future project** in an AI application with project-file access and Python execution. The person directing it can speak normally; the assistant handles commands and structured records. Read `AGENTS.md` explicitly if the application does not load it automatically. Translate meaningful input using the person's actual request and existing authorization; recorded provenance is not a repeated permission ritual.
 

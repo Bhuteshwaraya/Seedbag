@@ -1,4 +1,4 @@
-# Assistant bootstrap for Seedbag 0.3.3
+# Assistant bootstrap for Seedbag 0.3.4
 
 The human entry point is the single prompt in [README.md](README.md). This file tells the assistant how to fulfill it. The person supplies a project name and speaks normally; you handle setup, commands, records, and capability routing. Do not return installation instructions for the person to carry out or assume they can choose a suitable AI application.
 
@@ -15,6 +15,8 @@ Both of these creation routes are supported:
 
 A repository connector alone is not a substitute for executing the runtime and completing the documented Git publication checks. If no working execution route can be established, preserve a complete handoff.
 
+Before acquiring the full package or installing additional tools, identify the available route for both private repository creation and authenticated ordinary Git publication. A connector can identify the account without exposing either capability to the execution workspace. Read the pinned bootstrap and FIRST_RUN.md first; use the actual tool inventory and existing host setup notes to establish whether the missing pieces have a supported setup route. Do not install an unauthenticated CLI in a cloud workspace when there is no usable connection or permitted sign-in route for it. A working desktop connection is not automatically available in that cloud workspace. If this boundary prevents completion, hand off setup early, preserving the brief and resolved release identity.
+
 Assume the person may have never installed Git, obtained Python, created a GitHub account, or connected it to an AI application. Read [FIRST_RUN.md](FIRST_RUN.md) at the pinned release. Supply missing tools through supported available installation routes, reuse bundled runtimes, and guide any unavoidable account creation, sign-in, or OS approval one plain-language action at a time. Missing software or an unconnected account is not itself a reason to hand off. Do not ask the person to execute commands, configure Git, choose a technical transport, or repeat their project brief.
 
 You can acquire the pinned source and prepare non-secret setup notes while establishing the route. Verify the package manifest before running its read-only `seedbag_setup.py` helper. Workspace tool discovery, CLI API authentication, and ordinary Git transport are separate probe results; host connector access still needs inspection through the host. Treat helper results as evidence for your next action, not a certificate that the private project is ready. Recheck after fixing a prerequisite. Create the project repository only once the execution tools and intended connection route are usable.
@@ -29,7 +31,7 @@ If an actual capability or approval boundary prevents completion after following
 
 ## 2. Acquire one consistent seed release
 
-Use the official source, [Bhuteshwaraya/Seedbag](https://github.com/Bhuteshwaraya/Seedbag). Resolve the requested published v0.3.3 release to an exact commit, then read this file, the first-time setup guide, technical reference, manifest, and required package files at that same commit. If you first read this guide from a moving branch, reread it from the pinned release before using it. Do not mix branch-tip documentation with runtime files from another release.
+Use the official source, [Bhuteshwaraya/Seedbag](https://github.com/Bhuteshwaraya/Seedbag). Resolve the requested published v0.3.4 release to an exact commit, then read this file, the first-time setup guide, technical reference, manifest, and required package files at that same commit. If you first read this guide from a moving branch, reread it from the pinned release before using it. Do not mix branch-tip documentation with runtime files from another release.
 
 Retrieve and prepare the source yourself through available tools. Verify the manifest's listed file hashes before executing the package, and retain the release version and commit as setup provenance. If the requested release cannot be resolved or verified, report that concrete limitation; do not silently substitute another version or invent verification.
 
@@ -55,6 +57,8 @@ Make record changes through the project's runtime. Its ledger is the canonical c
 
 Verify that the planted runtime operates from its own project copy, the captured records and generated views agree, and any claimed completed work has the required current evidence. The planted README.md must give a friendly explanation of this project, links to its current goals and state, and clear instructions for resuming after a long absence. Verify that it contains the same permanent prompt as CONTINUE_HERE.md and that neither file contains an unresolved project locator. These are saved project files, not instructions left only in the conversation.
 
+Write those pages for the reader: explain the project and the next useful action. Do not describe the copy as friendly, arbitrary, nontechnical, or welcoming; those are design directions. Do not put claims about the reader's knowledge or identity into their continuation prompt. Keep assistant workflow instructions in AGENTS.md and the setup guide.
+
 Publish the complete intended project files through the documented workflow, including README.md, CONTINUE_HERE.md, the project's runtime, and continuity records. The publication gate must pass; do not bypass a missing-file or inconsistent-prompt failure. Then verify the exact remote commit and private repository visibility. Read back the saved README and continuation prompt from that commit, and confirm that the shared files contain the same project lineage as the working directory.
 
 Report the verified working location and private project repository separately. For computer-local creation, identify the actual local folder. For cloud creation, identify the workspace as cloud-hosted, say the computer-local folder is deferred, and explain that the same continuation prompt can obtain the project locally later. A workspace save, local Git commit, successful command, and verified remote checkpoint are different observations. If publication or verification is incomplete, say exactly what is saved and what remains; do not present partial setup as finished.
@@ -74,6 +78,8 @@ Verify the repository identity, selected branch and commit, required project fil
 ## When this application cannot finish
 
 You own the routing problem. Use actual tool and application discovery to determine whether an accessible destination can perform the missing work. Name a destination application only when you have evidence that it is available and capable; never require a particular provider by default or claim that any AI chat can execute the runtime. If a transfer is available and authorized in the current environment, use it while preserving the work. Otherwise provide **one complete copy-and-paste handoff prompt**, ready to use without editing.
+
+If no project has been planted and published, label this **incomplete setup**. Its handoff asks the next assistant to finish creation; it is not a permanent continuation prompt or evidence of a private checkpoint. State that distinction before the handoff so the person knows which step they are testing.
 
 The handoff must contain:
 
