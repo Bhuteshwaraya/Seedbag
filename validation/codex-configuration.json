@@ -1,0 +1,18 @@
+{
+  "result": "passed",
+  "codex_version": "0.153.4",
+  "platform": "Windows",
+  "helper_sha256": "218cef51ee5177561a56d614f10a788a58eeb4e742f08479c23385996873ad0e",
+  "checks": [
+    "read-only probe leaves settings unchanged",
+    "four exact definitions trusted through versioned host API",
+    "fresh process reads persisted trust",
+    "repeat setup writes nothing",
+    "unrelated settings preserved",
+    "Unicode project folder including non-BMP character",
+    "configuration success does not claim active interception"
+  ],
+  "model_turns_started": 0,
+  "real_user_configuration_changed": false,
+  "scope": "Disposable Codex settings home; the real installed host API was used. Actual model-loop behavior is reported separately."
+}

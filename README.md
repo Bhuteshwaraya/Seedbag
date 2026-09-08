@@ -12,7 +12,7 @@ Seedbag keeps project records that your assistant updates as you work: goals, de
 
 You describe the work normally. The assistant maintains the files and saves checkpoints to **your project's private GitHub repository**. A continuation prompt helps the next conversation find those files and recover the saved context.
 
-On your computer, the assistant works in a local folder. A cloud conversation can also create and continue the project when it has the required tools and private GitHub access. Both use the same project repository. This public Seedbag repository supplies the starting framework; it does not store your project.
+On your computer, the assistant works in a local folder. A cloud conversation can also prepare the project when it has the required tools and private GitHub access. Before project work begins, the assistant must verify that the app's automatic editing checks are active. Both use the same project repository. This public Seedbag repository supplies the starting framework; it does not store your project.
 
 ## Start a new project
 
@@ -21,7 +21,7 @@ Copy this prompt into your AI conversation. Replace **PROJECTNAME** with your pr
 ```text
 Create a new private project called PROJECTNAME with its own private GitHub repository under my account, using https://github.com/Bhuteshwaraya/Seedbag.
 
-Resolve the published v0.4.0 release to one exact commit. Read START_HERE.md there, follow its setup instructions, and use that same commit throughout.
+Resolve the published v0.4.1 release to one exact commit. Read START_HERE.md there, follow its setup instructions, and use that same commit throughout.
 
 If you can access my computer, create the working folder locally. If you have a capable cloud workspace, create the project there and verify its private GitHub checkpoint. Save a continuation prompt that lets a later local conversation retrieve and continue the same project.
 
@@ -32,7 +32,7 @@ This request authorizes the private project setup and necessary supported tool s
 
 The assistant handles Git, Python, and other technical setup. You may need to create an account, sign in, or approve access; it should explain each step when needed.
 
-If repository creation needs an account action, the assistant should guide it and continue. If it still cannot create and save a verified private checkpoint, it should say setup is incomplete and provide a handoff. That handoff finishes setup elsewhere; it is not yet the permanent prompt for continuing a saved project.
+If an account or app approval needs you, the assistant should guide it and continue. Setup is complete only after it verifies both the private save and the app's automatic editing checks. If either remains unfinished, it should preserve your input, say what is saved, and give you the next action or a complete setup handoff. You should not have to diagnose the problem or repeat your brief.
 
 ## Continue an existing project
 
@@ -48,7 +48,7 @@ Your project's GitHub front page saves a ready-to-use request with its actual ad
 
 For example, after a capable Work conversation saves the project to GitHub, you can paste its continuation prompt into local Codex. The assistant finds an existing local copy or retrieves the same repository into a local folder, then recovers the saved work.
 
-Each conversation needs suitable tools and account access. A repository connection alone does not give an assistant access to your computer or the ability to run the project. The current synchronization engine needs a workspace with an authenticated Git connection; a cloud conversation with only a GitHub file connector must finish setup in a capable environment. The assistant checks this and guides the handoff.
+Each conversation needs suitable tools, account access, and active editing checks. A repository connection alone does not give an assistant access to your computer or the ability to run the project. The current synchronization engine needs a workspace with an authenticated Git connection; a cloud conversation with only a GitHub file connector must finish setup in a capable environment. The assistant verifies the actual conversation is ready and guides any remaining setup before continuing work.
 
 ## Switch conversations without managing copies
 
@@ -56,11 +56,11 @@ Before starting work, the assistant checks the project's shared version. A clean
 
 If another participating conversation has unfinished work, the connection is unavailable, or two versions conflict, new changes pause while the assistant handles recovery. It preserves the work and explains any action that actually needs you.
 
-Seedbag includes Codex callbacks that check before covered editing tools and when the assistant finishes. They must be reviewed and activated on each supported device. Without active callbacks, the program still guards its own record and save commands, while other edits depend on the assistant following the project instructions. It cannot save after every crash or retrieve files that never left another computer. [How synchronization works](SYNC.md).
+Seedbag includes Codex callbacks that check before covered editing tools and when the assistant finishes. They must be reviewed and verified running in the conversation used for your project. Saving their configuration is only preparation. If the app cannot activate them, the assistant must keep setup marked incomplete and help you finish it before project work starts. The program can still preserve a verified private setup checkpoint. It cannot save after every crash or retrieve files that never left another computer. [How synchronization works](SYNC.md).
 
 ## Current status and limits
 
-Seedbag 0.4.0 is an early release. [The validation record](VALIDATION.md) explains what has been tested and what remains unverified.
+Seedbag 0.4.1 is an early release. [The validation record](VALIDATION.md) explains what has been tested and what remains unverified.
 
 Continuity depends on the assistant capturing important input and interpreting it faithfully. Seedbag does not automatically receive every chat message or recover conversations that were never saved. Changes saved only on one computer are unavailable elsewhere until shared to the private repository. Applications need suitable file access and tools to operate the project.
 

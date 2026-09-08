@@ -316,7 +316,8 @@ class SyncAdversarialTests(unittest.TestCase):
     def test_hook_and_normal_cli_share_the_same_host_session_identity(self):
         session = "host-session-id-for-integration"
         with session_environment(CODEX_THREAD_ID=session, SEEDBAG_SESSION_ID=None):
-            hooks.handle(self.root, {"hook_event_name": "SessionStart", "session_id": session})
+            hooks.handle(self.root, {"hook_event_name": "SessionStart", "session_id": session,
+                                     "cwd": str(self.root)})
             receipt = json.loads((self.root / sync.RECEIPT).read_bytes())
             self.assertEqual(receipt["state"], "ready_to_edit")
             old = core.load(self.root)

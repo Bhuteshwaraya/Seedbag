@@ -1,4 +1,4 @@
-# Seedbag 0.4.0 operations — for the assistant
+# Seedbag 0.4.1 operations — for the assistant
 
 The person starts with the creation prompt in README.md. Read START_HERE.md for your setup and routing duties. The commands below are for you to execute through available tools, never a checklist to assign to a person who asked you to handle setup. You also own obtaining the package, locating an available interpreter, Git setup, and a complete handoff when this application lacks the necessary capabilities.
 
@@ -32,7 +32,9 @@ After initial remote setup, run `sync-configure` and `sync-begin --setup` before
 
 Before a substantive final response, use `sync-checkpoint` with all exact intended changed files. The user need not request this. It verifies the shared commit and releases the writer; interrupted input can be preserved with `--incomplete`. For a blocked same-folder writer whose prior session has stopped, use `sync-recover --session ID`, then synchronize before new work. This cannot take over another workspace.
 
-With active trusted Codex callbacks, startup and new requests initiate sync, covered tools get a fresh preflight, and Stop requests a checkpoint if needed. Install with `install-host-hooks`, then follow and verify host trust/activation. A generated file alone is not active protection. See SYNC.md for the finite host coverage and connection-failure recovery.
+With active trusted Codex callbacks, startup and new requests initiate sync, covered tools get a fresh preflight, and Stop requests a checkpoint if needed. Install with `install-host-hooks`, inspect the commands, and follow the actual host trust control. Verify discovery and trust of those exact definitions for the actual conversation's project directory, plus a host-dispatched PreToolUse for a covered tool in that conversation. A tool's `workdir`, a generated file, a manually invoked callback, or a test in another task does not establish that protection. Do not install global callbacks or use trust-bypass flags to conceal missing project activation; the supported trust control may retain the reviewed definitions' trust in host configuration. See SYNC.md for the finite host coverage and connection-failure recovery.
+
+Private preservation and host readiness are separate results. While activation is pending, preserve the supplied brief and finish a guarded private setup checkpoint when possible, then verify writer release before a handoff. Report setup as incomplete until the actual conversation's editing checks are verified; do not invite or start product work. Give one verified plain-language host action or a complete setup handoff retaining the existing project. A cloud runtime that can synchronize its own commands but lacks active host callbacks cannot complete the automatic editing protection route.
 
 ## Command reference
 
@@ -57,8 +59,9 @@ With active trusted Codex callbacks, startup and new requests initiate sync, cov
 | `sync-checkpoint --message TEXT [--paths FILE...] [--session ID] [--incomplete]` | Requires the owned writer, audits intended files, commits, normally pushes, verifies the exact shared commit, and releases the writer. |
 | `sync-status` | Inspects local synchronization state without granting fresh readiness. |
 | `sync-recover --session ID` | Rebinds this folder's verified unfinished claim after the old session stopped; requires a subsequent sync-begin. Does not take another workspace's claim. |
-| `install-host-hooks` | Prepares ignored per-device Codex callbacks; actual host review, trust, and activation remain separate. |
-| `hook` | Reads one host callback event from JSON stdin and emits its protocol response. |
+| `install-host-hooks` | Prepares ignored per-device Codex callbacks; setup remains incomplete until actual host discovery, trust, and tool interception are verified in the project conversation. |
+| `configure-codex [--codex PATH] [--trust-reviewed]` | Reads actual Codex registration. After the assistant reviews the installed commands, the explicit flag retains trust only for this project and its exact generated definitions through the host configuration API. Preserves unrelated settings and rechecks registration. This does not certify tool interception in an already running conversation. |
+| `hook` | Reads one host callback event from JSON stdin and emits its protocol response. A manual call tests the adapter but does not prove host activation. |
 | `install-hook` | Installs an optional local pre-commit gate using this project's runtime and the current Python executable. Refuses to overwrite an existing hook or configured hooks path. |
 | `effect-run ID [--timeout SECONDS]` | Persists an attempt before running the declared, already authorized command. A returned command remains unresolved until its external outcome is inspected. Default timeout 60 seconds; valid range 1–300. |
 | `effect-resolve ID --receipt FILE --outcome confirmed\|not_performed` | Records the inspected outcome and exact receipt-file binding for a running/returned attempt. Does not rerun it. |

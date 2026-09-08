@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.1
+
+Keep setup incomplete until the actual project conversation has verified automatic tool protection. A saved private checkpoint, generated hook file, or passing manual callback does not establish that protection. Preserve the brief and release the writer before an incomplete setup handoff, and prefer a fresh conversation's own project directory so its callbacks are loaded in the right place.
+
+Add assistant-operated Codex configuration through the host's app-server API. After review, it can retain trust for this project's exact generated definitions while preserving unrelated settings. Readback distinguishes trusted configuration from observed lifecycle execution. Hooks refuse a conversation outside their installed project directory before acquiring a writer or allowing a covered tool.
+
+Successful strict pre-tool checks send brief host-delivered confirmation to the assistant, so a project conversation can observe its own active gate. Exempt recovery commands and local-only mode do not make that claim.
+
+Existing projects keep their installed version. No migration or automatic upgrade is provided. See VALIDATION.md for the actual host test coverage and remaining boundaries.
+
 ## 0.4.0
 
 Add strict synchronization for new repository-backed projects: fresh remote and writer checks before runtime mutations, audited fast-forward of clean older copies, exact-file checkpointing, verified normal push, and release of a cooperating writer claim. Both local and cloud workspaces need authenticated ordinary Git. A separate append-only metadata branch arbitrates writers without forced updates; unknown ownership and divergent work pause safely.

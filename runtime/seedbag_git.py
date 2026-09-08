@@ -48,7 +48,7 @@ REQUIRED_FILES = (
     "seedbag_setup.py", "seedbag.py", "SEEDBAG_LICENSE.txt",
     ".seedbag/runtime/seedbag_core.py", ".seedbag/runtime/seedbag_context.py",
     ".seedbag/runtime/seedbag_git.py", ".seedbag/runtime/seedbag_sync.py",
-    ".seedbag/runtime/seedbag_hooks.py", ".seedbag/sync.json", LEDGER, "PROJECT.md", "STATE.md",
+    ".seedbag/runtime/seedbag_hooks.py", ".seedbag/runtime/seedbag_codex.py", ".seedbag/sync.json", LEDGER, "PROJECT.md", "STATE.md",
     ".gitignore", ".gitattributes",
 )
 _ENTRY_START = "<!-- seedbag:continue:start -->"

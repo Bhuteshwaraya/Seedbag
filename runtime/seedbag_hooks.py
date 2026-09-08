@@ -68,7 +68,7 @@ def _brief(error):
     known = (
         "intended_file_paths_required", "remote_unavailable", "claim_conflict",
         "diverged", "not_configured", "session_mismatch", "runtime_changed",
-        "untrusted", "missing", "dirty", "remote_advanced",
+        "untrusted", "missing", "dirty", "remote_advanced", "wrong_workspace",
     )
     return next((state for state in known if state in value), type(error).__name__)
 
@@ -263,6 +263,14 @@ def _handle(root, event):
         raise core.Error("Unsupported Seedbag hook event")
     try:
         session = _session(event)
+        # Passing a project path to a command does not attach a Codex session
+        # to that project. Never acquire its writer or admit tools on the
+        # strength of callbacks loaded for a different working directory.
+        cwd = event.get("cwd")
+        if not isinstance(cwd, str) or not Path(cwd).is_absolute():
+            raise core.Error("wrong_workspace: the host did not identify an absolute session working directory")
+        if not Path(cwd).resolve().is_relative_to(root):
+            raise core.Error("wrong_workspace: this conversation is outside the installed project")
         if name in {"SessionStart", "UserPromptSubmit"}:
             result = _sync().begin(root, session=session)
             if isinstance(result, dict) and result.get("state") == "local_only" and result.get("ready_to_edit") is True:
@@ -281,7 +289,8 @@ def _handle(root, event):
                 return {}
             if not isinstance(result, dict) or result.get("state") != "ready_to_edit":
                 raise core.Error("Sync did not return a verified editing state")
-            return {}
+            return _context(name, "Seedbag PreToolUse ran for this tool: the shared checkpoint and this session's "
+                            "writer claim were freshly verified. This confirms this covered call, not project completion.")
         # No file list is inferred from the transcript or arbitrary workspace
         # changes. The runtime can verify/release a clean checkpoint; a dirty
         # checkpoint requires the assistant to name the intended paths itself.
@@ -407,6 +416,13 @@ def install(root, python=None):
                 os.unlink(temporary)
     return {"state": "prepared_requires_host_trust", "path": str(target), "changed": changed,
             "active_verified": False, "trust_changed": False, "events": list(EVENTS),
-            "next_action": "Review and trust the project and these hook definitions in the host. "
-                           "Codex CLI exposes this through /hooks. Then verify actual lifecycle execution.",
+            "setup_complete": False, "protected_work_ready": False,
+            "pending_requirements": ["conversation_in_project_workspace", "exact_hook_definitions_trusted",
+                                     "host_dispatched_tool_gate_verified", "callback_git_access_verified"],
+            "next_action": "Finish saving the setup and releasing its writer, then verify these exact callbacks "
+                           "in a conversation operating in this project folder. Use the host's actual review "
+                           "control (Codex CLI exposes /hooks), and observe a real covered tool call. "
+                           "A prepared file, a manual hook invocation, or a shell workdir override is not activation. "
+                           "If this host cannot finish, report setup incomplete and provide one supported next "
+                           "action or a complete handoff. Do not start product work with protection still unverified.",
             "coverage": "Supported Codex tool paths only; running terminal input and exempt tools are outside this guardrail."}

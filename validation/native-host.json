@@ -1,0 +1,79 @@
+{
+  "host": "Codex 0.153.4 on Windows, native app-server, ephemeral model turns",
+  "source": "Frozen v0.4.1 staging snapshot; installed runtime hashes below bind this proof",
+  "result": "passed",
+  "checks": {
+    "negative_host_turn_completed": true,
+    "real_pre_tool_use_blocked": true,
+    "busy_writer_was_actual_reason": true,
+    "negative_tool_not_delivered": true,
+    "sentinel_absent": true,
+    "local_started_behind": true,
+    "positive_host_turn_completed": true,
+    "exactly_one_allowed_delivery": true,
+    "current_at_tool_delivery": true,
+    "new_note_read_after_catchup": true,
+    "real_entry_and_tool_hooks_completed": true,
+    "real_clean_stop_completed": true,
+    "checkpoint_shared_verified": true,
+    "writer_released": true,
+    "tree_clean": true,
+    "native_pre_tool_use_delivered_context": true,
+    "model_received_and_quoted_hook_context": true
+  },
+  "negative_elapsed_seconds": 15.733999999938533,
+  "positive_elapsed_seconds": 20.71799999999348,
+  "project_before": "fe423072650de6fe63cff91d55a2e444c5422bbe",
+  "shared_and_local_after": "28c50fb8eb94eb3b3bf1ded4a6b01b4ec8f4fe9a",
+  "trust": {
+    "api": "config/batchWrite using currentHash for each exact hooks/list key",
+    "isolated_persisted_trust_before": [
+      "untrusted",
+      "untrusted",
+      "untrusted",
+      "untrusted"
+    ],
+    "isolated_persisted_trust_after": [
+      "trusted",
+      "trusted",
+      "trusted",
+      "trusted"
+    ],
+    "live_model_scope": "exact definition hashes in process-only TOML table overrides, existing account, ordinary workspace-write sandbox",
+    "global_settings_changed": false,
+    "blanket_trust_bypass_used": false
+  },
+  "installed_python_sha256": {
+    "seedbag.py": "4c8cc3260f7df33102c39826465e4b8264bb51201e4255d80362f07051363483",
+    ".seedbag/runtime/seedbag_codex.py": "218cef51ee5177561a56d614f10a788a58eeb4e742f08479c23385996873ad0e",
+    ".seedbag/runtime/seedbag_context.py": "4902f4c90e8e771d29613bf76efcc3696008e0f765b5ddcbfe9bed6fc5ee4654",
+    ".seedbag/runtime/seedbag_core.py": "ddae0fbd1592ceb6609368996ee0ea19ab8142034c70a9054626790637b8eb2e",
+    ".seedbag/runtime/seedbag_git.py": "14266238430e30e0ada8510612bf53dcfe65127ec8282cb0ae79aec5ded1d86f",
+    ".seedbag/runtime/seedbag_hooks.py": "7ed090579ec9b521c34490c46a19ad186eb565eaad11b588c59732d552874ca7",
+    ".seedbag/runtime/seedbag_sync.py": "e8ead6eb1a51db5f4feffc42bb8479b6c1ec257bd62acda86ff263e3c3637db6"
+  },
+  "model_visibility": {
+    "native_hook_context": [
+      "Seedbag PreToolUse ran for this tool: the shared checkpoint and this session's writer claim were freshly verified. This confirms this covered call, not project completion."
+    ],
+    "model_final": "Note returned: `NEWER SHARED CHECKPOINT`\n\nHost confirmation:\n> Seedbag PreToolUse ran for this tool: the shared checkpoint and this session's writer claim were freshly verified. This confirms this covered call, not project completion.",
+    "dynamic_tool_result": "NEWER SHARED CHECKPOINT\n",
+    "expected_confirmation_supplied_in_prompt": false
+  },
+  "limits": [
+    "No global trust or real project was changed. Persistent exact trust was verified in an isolated Codex home; live model runs used equivalent process-only trust configuration.",
+    "The covered write attempt used a client-provided dynamic sentinel tool. Its native PreToolUse event was blocked before tool delivery; this does not prove every app-specific nested/outer tool route.",
+    "The positive scenario used a covered read tool and clean automatic Stop closeout. Dirty-file checkpoint authoring was not exercised.",
+    "Git remote was a disposable local bare repository under the same Windows owner as the host. Prior mixed-owner fixture and generic shell-policy denial were excluded from success evidence."
+  ],
+  "final_staging_python_match": {
+    "seedbag.py": true,
+    ".seedbag/runtime/seedbag_codex.py": true,
+    ".seedbag/runtime/seedbag_context.py": true,
+    ".seedbag/runtime/seedbag_core.py": true,
+    ".seedbag/runtime/seedbag_git.py": true,
+    ".seedbag/runtime/seedbag_hooks.py": true,
+    ".seedbag/runtime/seedbag_sync.py": true
+  },
+  "evidence_retention": "Detailed synthetic host event logs retained with the maintainer's test fixture; summarized without device paths here."
+}

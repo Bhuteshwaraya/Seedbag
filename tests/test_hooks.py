@@ -82,6 +82,21 @@ class HookTests(unittest.TestCase):
             self.assertIn("shared starting point", result["hookSpecificOutput"]["additionalContext"])
         self.runtime.begin.assert_called_with(self.root, session="test-session")
 
+    def test_other_workspace_cannot_acquire_writer_or_admit_a_tool(self):
+        for cwd in (str(self.root.parent), "relative/project", None):
+            with self.subTest(cwd=cwd):
+                result = self.call("SessionStart", cwd=cwd)
+                self.assertIn("wrong_workspace", json.dumps(result))
+                self.assert_denied(self.call("PreToolUse", cwd=cwd, tool_name="apply_patch",
+                                             tool_input={"command": "patch"}))
+        self.runtime.begin.assert_not_called()
+        self.runtime.require_ready.assert_not_called()
+
+    def test_project_subdirectory_keeps_the_same_gate(self):
+        result = self.call("SessionStart", cwd=str(self.root / "src"))
+        self.assertIn("shared starting point", json.dumps(result))
+        self.runtime.begin.assert_called_once_with(self.root, session="test-session")
+
     def test_failed_entry_preserves_prompt_for_recovery_without_leaking_error(self):
         self.runtime.begin.side_effect = core.Error("remote_unavailable https://token:secret@example.invalid")
         result = self.call("UserPromptSubmit")
@@ -92,7 +107,10 @@ class HookTests(unittest.TestCase):
 
     def test_writes_require_fresh_ready_state_even_after_entry(self):
         self.call("SessionStart")
-        self.assertEqual(self.call("PreToolUse", tool_name="apply_patch", tool_input={"command": "patch"}), {})
+        result = self.call("PreToolUse", tool_name="apply_patch", tool_input={"command": "patch"})
+        self.assertEqual(result["hookSpecificOutput"]["hookEventName"], "PreToolUse")
+        self.assertIn("freshly verified", result["hookSpecificOutput"]["additionalContext"])
+        self.assertNotIn("permissionDecision", result["hookSpecificOutput"])
         self.runtime.require_ready.assert_called_once_with(self.root, session="test-session", refresh=True)
         self.block()
         self.assert_denied(self.call("PreToolUse", tool_name="apply_patch", tool_input={"command": "patch"}))
@@ -393,6 +411,9 @@ class HookInstallationTests(unittest.TestCase):
         self.assertEqual(document["hooks"]["PreToolUse"][0], existing["hooks"]["PreToolUse"][0])
         self.assertEqual(result["state"], "prepared_requires_host_trust")
         self.assertFalse(result["active_verified"])
+        self.assertFalse(result["setup_complete"])
+        self.assertFalse(result["protected_work_ready"])
+        self.assertIn("host_dispatched_tool_gate_verified", result["pending_requirements"])
         self.assertFalse(result["trust_changed"])
         self.assertEqual(before_config, config.read_bytes())
         self.assertEqual(set(document["hooks"]), set(hooks.EVENTS))
@@ -509,7 +530,7 @@ class HookRuntimeIntegrationTests(unittest.TestCase):
                            before["revision"], before["digest"])
                 views.render(root)
                 event.update(hook_event_name="PreToolUse", tool_name="apply_patch", tool_input={"command": "fixture patch"})
-                self.assertEqual(hooks.handle(root, event), {})
+                self.assertIn("freshly verified", hooks.handle(root, event)["hookSpecificOutput"]["additionalContext"])
                 event["hook_event_name"] = "Stop"
                 self.assertEqual(hooks.handle(root, event)["decision"], "block")
                 sync.checkpoint(root, "Save intended work", paths=sync.status(root)["changed_paths"])

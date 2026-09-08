@@ -21,7 +21,7 @@ SEED_FILES = [
     ".gitignore", ".gitattributes", ".seedbag/ledger.json",
     ".seedbag/runtime/seedbag_core.py", ".seedbag/runtime/seedbag_context.py",
     ".seedbag/runtime/seedbag_git.py", ".seedbag/runtime/seedbag_sync.py",
-    ".seedbag/runtime/seedbag_hooks.py", ".seedbag/sync.json",
+    ".seedbag/runtime/seedbag_hooks.py", ".seedbag/runtime/seedbag_codex.py", ".seedbag/sync.json",
 ]
 
 
@@ -51,6 +51,8 @@ class InstalledCliTests(unittest.TestCase):
         self.assertTrue(planted["git_initialized"])
         self.assertFalse(planted["shared"])
         self.assertFalse(planted["remote_configured"])
+        self.assertFalse(planted["setup_complete"])
+        self.assertFalse(planted["protected_work_ready"])
         self.assertEqual((self.root / "SEEDBAG_LICENSE.txt").read_bytes(), (PACKAGE / "LICENSE").read_bytes())
         for support in ("seedbag_setup.py", "FIRST_RUN.md"):
             self.assertEqual((self.root / support).read_bytes(), (PACKAGE / support).read_bytes())
