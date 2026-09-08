@@ -1,4 +1,10 @@
-"""Local bare-remote tests. No GitHub, networking, global config, or live repos."""
+"""Snapshot and historical transport primitives with isolated bare remotes.
+
+Intentional competing writers call the private uncoordinated transport helper.
+Public installed publication and its sync binding are tested in test_sync and
+test_sync_adversarial without this file's deliberately bypassed core guard.
+No GitHub, networking, global configuration, or live repositories participate.
+"""
 import copy
 import json
 import os
@@ -7,6 +13,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "runtime"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -14,6 +21,7 @@ import seedbag_core as core
 import seedbag_context as context
 import seedbag_git as git
 import seedbag
+import seedbag_sync as sync
 
 
 CORE_FILES = list(git.REQUIRED_FILES)
@@ -21,6 +29,12 @@ CORE_FILES = list(git.REQUIRED_FILES)
 
 class GitTests(unittest.TestCase):
     def setUp(self):
+        # These tests isolate the existing Git snapshot/lineage gate, including
+        # deliberately competing writers. Real synchronization is exercised by
+        # test_sync and test_sync_adversarial without this unit-test mock.
+        guard = mock.patch.object(sync, "require_ready", return_value={"ready_to_edit": True})
+        guard.start()
+        self.addCleanup(guard.stop)
         work = Path(os.environ.get("SEEDBAG_TEST_WORK", str(Path.cwd() / "work"))).resolve()
         work.mkdir(parents=True, exist_ok=True)
         self.base = Path(tempfile.mkdtemp(prefix="seedbag-git-v03-", dir=work))
@@ -134,7 +148,7 @@ class GitTests(unittest.TestCase):
     def test_publish_preserves_entry_bytes_and_complete_files_in_fresh_clone(self):
         expected = {name: (self.root / name).read_bytes() for name in ("README.md", "CONTINUE_HERE.md")}
         self.apply([{"op": "project.set", "purpose": "Continue the same project after a saved update"}])
-        git.publish(self.root, "Preserve permanent entry across update", CORE_FILES)
+        git._publish_uncoordinated(self.root, "Preserve permanent entry across update", CORE_FILES)
         fresh = self.clone("entry-reader")
         self.assertTrue(git.validate_entry_files(fresh, core.load(fresh))["ok"])
         for name, contents in expected.items():
@@ -162,7 +176,7 @@ class GitTests(unittest.TestCase):
 
     def test_rehashed_prior_event_rewrite_is_rejected(self):
         self.apply([{"op": "project.set", "purpose": "Original purpose"}])
-        git.publish(self.root, "Original purpose", CORE_FILES)
+        git._publish_uncoordinated(self.root, "Original purpose", CORE_FILES)
         ledger = copy.deepcopy(core.load(self.root)["ledger"])
         ledger["events"][0]["operations"][0]["purpose"] = "Silently replaced purpose"
         event = ledger["events"][0]
@@ -192,7 +206,7 @@ class GitTests(unittest.TestCase):
     def test_incomplete_checkpoint_preserves_pending_capture_with_hook(self):
         git.install_hook(self.root)
         self.apply([{"op": "capture.add", "id": "Pending", "text": "Recover this interrupted fact", "origin": "user", "locator": "fixture conversation"}])
-        result = git.publish(self.root, "Interrupted capture only", CORE_FILES, incomplete=True)
+        result = git._publish_uncoordinated(self.root, "Interrupted capture only", CORE_FILES, incomplete=True)
         self.assertTrue(result["snapshot_only"])
         self.assertTrue(any("Unprocessed capture" in item for item in result["readiness_warnings"]))
         fresh = self.clone("interrupted-reader")
@@ -221,7 +235,7 @@ class GitTests(unittest.TestCase):
         before = self.g(self.root, "ls-files", "--stage")
         self.apply([{"op": "project.set", "purpose": "Intended change"}])
         with self.assertRaisesRegex(core.Error, "Other files are already staged"):
-            git.publish(self.root, "Intended update", CORE_FILES)
+            git._publish_uncoordinated(self.root, "Intended update", CORE_FILES)
         self.assertEqual(self.g(self.root, "ls-files", "--stage"), before)
         self.assertEqual(self.g(self.root, "rev-parse", "HEAD").strip(), self.initial)
 
@@ -231,7 +245,7 @@ class GitTests(unittest.TestCase):
         before = self.g(self.root, "ls-files", "--stage")
         self.apply([{"op": "project.set", "purpose": "Second unstaged version"}])
         with self.assertRaisesRegex(core.Error, "index holds a different version"):
-            git.publish(self.root, "Do not overwrite index", CORE_FILES)
+            git._publish_uncoordinated(self.root, "Do not overwrite index", CORE_FILES)
         self.assertEqual(self.g(self.root, "ls-files", "--stage"), before)
 
     def test_publish_readback_and_local_status_boundaries(self):
@@ -246,7 +260,7 @@ class GitTests(unittest.TestCase):
         self.assertEqual(committed["shared_state"], "ahead")
         fresh_before = self.clone("before-push")
         self.assertEqual(core.load(fresh_before)["revision"], 0)
-        shared = git.publish(self.root, "Publish existing checkpoint", CORE_FILES)
+        shared = git._publish_uncoordinated(self.root, "Publish existing checkpoint", CORE_FILES)
         self.assertEqual(shared["state"], "shared_verified")
         fresh_after = self.clone("after-push")
         self.assertEqual(core.load(fresh_after)["digest"], core.load(self.root)["digest"])
@@ -255,7 +269,7 @@ class GitTests(unittest.TestCase):
     def test_candidate_discovery_leaves_default_branch_unchanged(self):
         self.g(self.root, "switch", "-c", "candidate/browser-review")
         self.apply([{"op": "current.set", "summary": "Candidate: browser verification pending; not accepted", "next_work": None}])
-        result = git.publish(self.root, "Candidate pending browser review", CORE_FILES)
+        result = git._publish_uncoordinated(self.root, "Candidate pending browser review", CORE_FILES)
         fresh = self.clone("candidate-reader")
         before = self.g(fresh, "rev-parse", "HEAD")
         found = git.status(fresh, fetch=True)
@@ -284,12 +298,12 @@ class GitTests(unittest.TestCase):
     def test_divergent_publish_refuses_without_discarding_either_writer(self):
         other = self.clone("other-writer")
         self.apply([{"op": "project.set", "purpose": "Writer A decision"}])
-        first = git.publish(self.root, "Writer A", CORE_FILES)
+        first = git._publish_uncoordinated(self.root, "Writer A", CORE_FILES)
         self.apply([{"op": "project.set", "purpose": "Writer B different decision"}], root=other)
         preserved = (other / git.LEDGER).read_bytes()
         (other / "unfinished.txt").write_text("Do not discard", encoding="utf-8")
         with self.assertRaisesRegex(core.Error, "ahead or divergent"):
-            git.publish(other, "Writer B checkpoint", CORE_FILES)
+            git._publish_uncoordinated(other, "Writer B checkpoint", CORE_FILES)
         self.assertEqual((other / git.LEDGER).read_bytes(), preserved)
         self.assertEqual((other / "unfinished.txt").read_text(), "Do not discard")
         self.assertNotEqual(self.g(other, "rev-parse", "HEAD").strip(), self.initial)
@@ -383,7 +397,7 @@ class GitTests(unittest.TestCase):
 
     def test_publish_refuses_committed_rollback_against_shared_tip(self):
         self.apply([{"op": "project.set", "purpose": "Published continuity record"}])
-        published = git.publish(self.root, "Publish continuity record", CORE_FILES)
+        published = git._publish_uncoordinated(self.root, "Publish continuity record", CORE_FILES)
         for name in CORE_FILES:
             (self.root / name).write_bytes(self.g(self.root, "show", f"{self.initial}:{name}").encode("utf-8"))
         self.stage_core()
@@ -393,13 +407,13 @@ class GitTests(unittest.TestCase):
         # committed-content comparison against the shared baseline exposes it.
         git.gate(self.root)
         with self.assertRaisesRegex(core.Error, "history was removed or rewritten"):
-            git.publish(self.root, "Do not share rolled-back ledger", CORE_FILES)
+            git._publish_uncoordinated(self.root, "Do not share rolled-back ledger", CORE_FILES)
         self.assertEqual(self.g(self.root, "rev-parse", "HEAD").strip(), outgoing)
         self.assertEqual(self.g(self.remote, "rev-parse", "refs/heads/main").strip(), published["commit"])
 
     def test_committed_audit_refuses_missing_shallow_parent(self):
         self.apply([{"op": "project.set", "purpose": "Second committed snapshot"}])
-        shared = git.publish(self.root, "Extend before shallow clone", CORE_FILES)
+        shared = git._publish_uncoordinated(self.root, "Extend before shallow clone", CORE_FILES)
         shallow = self.base / "shallow-reader"
         self.g(self.base, "clone", "--no-local", "--depth=1", str(self.remote), str(shallow))
         self.assertEqual(self.g(shallow, "rev-parse", "HEAD").strip(), shared["commit"])

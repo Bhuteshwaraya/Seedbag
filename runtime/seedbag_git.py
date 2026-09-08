@@ -6,6 +6,8 @@ The optional hook is a local convenience, not an adversarial security boundary.
 from __future__ import annotations
 
 import base64
+from contextlib import contextmanager, ExitStack
+from contextvars import ContextVar
 import hashlib
 import json
 import os
@@ -15,17 +17,38 @@ import shlex
 import subprocess
 import sys
 import tempfile
+import time
 
 import seedbag_core as core
 import seedbag_context as views
 
 Error = core.Error
+_OPERATION_DEADLINE = ContextVar("seedbag_git_operation_deadline", default=None)
+
+
+@contextmanager
+def operation_deadline(seconds):
+    """Bound a sequence of Git calls so a host hook can emit its own failure.
+
+    An inner operation cannot extend an outer deadline. This only changes this
+    Python context, never user configuration or the child process environment.
+    """
+    proposed = time.monotonic() + seconds
+    existing = _OPERATION_DEADLINE.get()
+    token = _OPERATION_DEADLINE.set(min(existing, proposed) if existing is not None else proposed)
+    try:
+        yield
+    finally:
+        _OPERATION_DEADLINE.reset(token)
+
+
 LEDGER = ".seedbag/ledger.json"
 REQUIRED_FILES = (
-    "README.md", "CONTINUE_HERE.md", "AGENTS.md", "FIRST_RUN.md",
+    "README.md", "CONTINUE_HERE.md", "AGENTS.md", "FIRST_RUN.md", "SYNC.md",
     "seedbag_setup.py", "seedbag.py", "SEEDBAG_LICENSE.txt",
     ".seedbag/runtime/seedbag_core.py", ".seedbag/runtime/seedbag_context.py",
-    ".seedbag/runtime/seedbag_git.py", LEDGER, "PROJECT.md", "STATE.md",
+    ".seedbag/runtime/seedbag_git.py", ".seedbag/runtime/seedbag_sync.py",
+    ".seedbag/runtime/seedbag_hooks.py", ".seedbag/sync.json", LEDGER, "PROJECT.md", "STATE.md",
     ".gitignore", ".gitattributes",
 )
 _ENTRY_START = "<!-- seedbag:continue:start -->"
@@ -37,11 +60,36 @@ _ENTRY_BLOCK = re.compile(
 
 
 def _git(root, *args, allow_failure=False, input_bytes=None, env=None):
+    deadline = _OPERATION_DEADLINE.get()
+    remaining = min(120, deadline - time.monotonic()) if deadline is not None else 120
+    if remaining <= 0:
+        raise Error("The synchronization time budget ended. Preserve files and inspect shared state before retrying.")
     try:
-        result = subprocess.run(
-            ["git", "-C", str(root), *args], input=input_bytes,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120, env=env,
-        )
+        # PIPE-based communicate() can wait beyond its timeout when a Git
+        # descendant inherits a pipe. Regular temporary files have no EOF wait
+        # on another process. This applies to stdin as well as both outputs.
+        # A timed-out transport may still have an uncertain remote outcome; the
+        # caller must inspect that state, never assume a cancellation receipt.
+        with ExitStack() as stack:
+            output = stack.enter_context(tempfile.TemporaryFile())
+            errors = stack.enter_context(tempfile.TemporaryFile())
+            incoming = subprocess.DEVNULL
+            if input_bytes is not None:
+                incoming = stack.enter_context(tempfile.TemporaryFile())
+                incoming.write(input_bytes)
+                incoming.seek(0)
+            completed = subprocess.run(
+                ["git", "-C", str(root), *args], stdin=incoming,
+                stdout=output, stderr=errors, timeout=remaining, env=env,
+            )
+            # Read only the size observed after Git returned; an unrelated
+            # lingering descendant cannot extend the read indefinitely.
+            output_size = os.fstat(output.fileno()).st_size
+            error_size = os.fstat(errors.fileno()).st_size
+            output.seek(0)
+            errors.seek(0)
+            result = subprocess.CompletedProcess(completed.args, completed.returncode,
+                                                 output.read(output_size), errors.read(error_size))
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise Error(f"Git could not finish. Local files are preserved: {exc}") from exc
     if result.returncode and not allow_failure:
@@ -146,6 +194,15 @@ def validate_entry_files(root, snapshot):
         raise Error("CONTINUE_HERE.md does not identify this project's saved repository locator.")
     if not repository and not (PurePosixPath(locator).is_absolute() or PureWindowsPath(locator).is_absolute()):
         raise Error("A local-only CONTINUE_HERE.md must identify an absolute folder location.")
+    policy = core.read_json(root / ".seedbag/sync.json")
+    expected_keys = {"schema", "policy", "repository", "remote", "branch", "claim_ref"}
+    if (not isinstance(policy, dict) or set(policy) != expected_keys or policy["schema"] != 1
+            or policy["repository"] != repository
+            or policy["policy"] != ("strict" if repository else "local")
+            or policy["claim_ref"] != "refs/heads/seedbag-sync-claims"
+            or not isinstance(policy["remote"], str) or not policy["remote"] or policy["remote"].startswith("-")
+            or not isinstance(policy["branch"], str) or not policy["branch"] or policy["branch"].startswith("-")):
+        raise Error("The installed synchronization policy is missing, invalid, or does not match this project.")
     return {"ok": True, "continuation_prompt": paragraph}
 
 
@@ -348,7 +405,7 @@ def _remote_refs(root):
     result = []
     for line in output.splitlines():
         ref, commit, date, subject = line.split("\0", 3)
-        if not ref.endswith("/HEAD"):
+        if not ref.endswith(("/HEAD", "/seedbag-sync-claims")):
             result.append({"ref": ref, "commit": commit, "recorded_commit_time": date, "subject": subject})
     return result
 
@@ -410,6 +467,25 @@ def candidate_state(root, ref):
 
 
 def publish(root, message, paths, remote="origin", branch=None, incomplete=False):
+    """Publish installed projects only through their bound synchronization gate."""
+    root = _root(root)
+    if core._installed(root):
+        import seedbag_sync as sync
+        policy = sync._policy(root)
+        if policy["policy"] != "strict":
+            raise Error("This project is local-only; it has no bound shared publication destination.")
+        if remote != policy["remote"] or (branch is not None and branch != policy["branch"]):
+            raise Error("Publication must use this project's bound remote and branch; another configured repository is not its destination.")
+        return sync.checkpoint(root, message, paths, incomplete=incomplete)
+    return _publish_uncoordinated(root, message, paths, remote, branch, incomplete)
+
+
+def _publish_uncoordinated(root, message, paths, remote="origin", branch=None, incomplete=False):
+    """Internal historical snapshot/transport primitive, not an installed API.
+
+    Tests use this to model writers outside synchronization. Installed commands
+    must call publish or seedbag_sync.checkpoint, which enforce the binding.
+    """
     root = _root(root)
     if not isinstance(paths, list) or not paths or len(set(paths)) != len(paths):
         raise Error("Name the exact intended files once each; publication does not stage the whole directory.")
@@ -419,7 +495,7 @@ def publish(root, message, paths, remote="origin", branch=None, incomplete=False
             raise Error(f"Name individual files rather than a directory: {name}")
         if name.startswith(".seedbag-local/"):
             raise Error("Local locks and scratch state are not publication targets.")
-        if name.startswith(".seedbag/") and name != LEDGER and not name.startswith(".seedbag/runtime/"):
+        if name.startswith(".seedbag/") and name not in (LEDGER, ".seedbag/sync.json") and not name.startswith(".seedbag/runtime/"):
             raise Error(f"Local Seedbag working files are not publication targets: {name}")
     if not isinstance(message, str) or not message.strip():
         raise Error("Supply a short checkpoint message describing the saved change.")

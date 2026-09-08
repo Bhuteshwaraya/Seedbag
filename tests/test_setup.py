@@ -233,7 +233,9 @@ class SetupTests(unittest.TestCase):
     def test_transport_environment_preserves_config(self):
         inherited = {"GIT_SSH_COMMAND": "shared-ssh-config", "GH_HOST": "other.example", "GIT_CONFIG_COUNT": "1",
                      "GIT_CONFIG_KEY_0": "url.git@github.com:.insteadOf", "GIT_CONFIG_VALUE_0": "https://github.com/"}
-        with patch.dict(os.environ, inherited):
+        # Probes are mocked; replace the Python mapping rather than clearing
+        # and rebuilding the process's native environment on Windows.
+        with patch.object(os, 'environ', {**os.environ, **inherited}):
             before = os.environ.copy()
             _, calls = self.run_case()
             self.assertEqual(dict(os.environ), before)

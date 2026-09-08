@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0
+
+Add strict synchronization for new repository-backed projects: fresh remote and writer checks before runtime mutations, audited fast-forward of clean older copies, exact-file checkpointing, verified normal push, and release of a cooperating writer claim. Both local and cloud workspaces need authenticated ordinary Git. A separate append-only metadata branch arbitrates writers without forced updates; unknown ownership and divergent work pause safely.
+
+Add per-device Codex callbacks for startup, new requests, covered tools, and response completion. Generated hooks require actual host review/trust and activation; the release does not claim every host or tool is mechanically covered. Stop requests one bounded save continuation and never silently publishes unknown files. Connection loss, uncertain pushes/releases, and same-folder interrupted sessions have explicit recovery paths.
+
+Plant SYNC.md, a tracked destination policy, and the new runtime modules. Keep the short continuation request and existing visual homepage. Require verified synchronization during setup; the legacy connector exporter remains a preparation utility, not an alternative automatic-sync backend. Existing projects are unchanged and no migration is provided.
+
 ## 0.3.5
 
 New projects save a short continuation request: `Continue my project: PROJECT-LOCATION`. Ordinary wording is welcome. The README directs the assistant to AGENTS.md, where setup, recovery, local-folder, and authorization instructions live. The saved request remains stable and mechanically tied to the project's locator.

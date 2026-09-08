@@ -1,5 +1,5 @@
 {
-  "version": "0.3.5",
+  "version": "0.4.0",
   "files": {
     ".gitattributes": {
       "bytes": 73,
@@ -14,40 +14,44 @@
       "sha256": "184fad8a889bb64fc2e04268c923999ccbfbeb7b6d49f22c64483a7043ab5774"
     },
     "AGENTS.md": {
-      "bytes": 2011,
-      "sha256": "1361ad859b30c36720570fda7d098081009710ee9ddb91dd8e4404a5bd25ee78"
+      "bytes": 2420,
+      "sha256": "f3c70b3e19b2c99a82a6ea763ac9abf2dd21355522b51dc78e815aedbe3a90c5"
     },
     "CHANGELOG.md": {
-      "bytes": 5422,
-      "sha256": "dc87cab93e62598b0173c786a000918791c2c8e0b19c316fd1821d139a539548"
+      "bytes": 6674,
+      "sha256": "62f947ab2265bf59e2b48c8b769a1f9ed71880065fb72d81bb160519c0252b62"
     },
     "FIRST_RUN.md": {
-      "bytes": 25332,
-      "sha256": "2ac50a850ec1da127fa8b67da5c2c6319f2618b8a27cdf5b140ed8fd75ad0402"
+      "bytes": 22434,
+      "sha256": "af844e512ac6d4ebeba28e2c8418dc5f8dea14c6eec3c2a1e33b0ed78d0d4745"
     },
     "LICENSE": {
       "bytes": 1077,
       "sha256": "3a3d2e05cb70e1aa256a20ee8818d91da74402f70410bab48e4da763eff2797e"
     },
     "OPERATIONS.md": {
-      "bytes": 33652,
-      "sha256": "a43e938522397afcf74cbde121911773051011bf61640028003a9059c183be20"
+      "bytes": 35591,
+      "sha256": "f2c6cb6aba9708756cfa58dd2a7f63cc50fbf063ba06c6fe5faf5c0dbf41858f"
     },
     "README.md": {
-      "bytes": 5506,
-      "sha256": "a41361a8994414c743e53d59568a0654305ad42abfcd5e1c2a05e9048990e204"
+      "bytes": 6564,
+      "sha256": "b989d259596d1bc5aeda2045369015bd323454577ab129ee4fc49c6ce1dfe28c"
     },
     "START_HERE.md": {
-      "bytes": 19721,
-      "sha256": "f701730246dcc4bccd80adc654e272e12cb4f8e76601205b422daf3b87fb9db3"
+      "bytes": 8930,
+      "sha256": "c99e90aab79f277ce79d4a0869d51801d14504ead1035851f8254a0cc0db39df"
+    },
+    "SYNC.md": {
+      "bytes": 12516,
+      "sha256": "d5afc1b1b725e37c4e8c22602f04111ea54c61d1f901ff037866c448fae8be0d"
     },
     "VALIDATION.md": {
-      "bytes": 9440,
-      "sha256": "6861e1a32f33f95e9ca693286a7d177ffbcae1d57bb6c7ab35fa517c47b2b3f8"
+      "bytes": 7747,
+      "sha256": "baa3ba59c05bc90cae0ce8822b28f816f712ba4b0f1df0123320d239e05e880f"
     },
     "VERSION": {
       "bytes": 6,
-      "sha256": "d5d1d767be9218f02ebda081a83a2b2fede85055e910e5a94a09329966486fcc"
+      "sha256": "40b8eb4000a913a7791090535f291d3d369874162a89ef3c9e3d4e887a1b9e79"
     },
     "assets/continuity-map.svg": {
       "bytes": 3957,
@@ -66,24 +70,32 @@
       "sha256": "4902f4c90e8e771d29613bf76efcc3696008e0f765b5ddcbfe9bed6fc5ee4654"
     },
     "runtime/seedbag_core.py": {
-      "bytes": 30086,
-      "sha256": "db2b40aa8dba2831a07f3785b610cfa0021f905af5e64d012e2fad57e1ff82a3"
+      "bytes": 30955,
+      "sha256": "736c54631ecc6cd204dd0c82ae8866b5a56c995ab179fd1adc5ecbd782c99deb"
     },
     "runtime/seedbag_git.py": {
-      "bytes": 29185,
-      "sha256": "925b5f63853b2fbf8b84df3004d6ed5e7c53912ec460079a8b6d745cb618e108"
+      "bytes": 33522,
+      "sha256": "541363a76f599c20373d381fd5a967d2a3288c08a25fb53135f335ac58eb7d15"
+    },
+    "runtime/seedbag_hooks.py": {
+      "bytes": 19039,
+      "sha256": "ef7b91c5cacadaf77a7a1bce91eedf347dfacbf438702992719f4d4351932f70"
+    },
+    "runtime/seedbag_sync.py": {
+      "bytes": 33844,
+      "sha256": "e8ead6eb1a51db5f4feffc42bb8479b6c1ec257bd62acda86ff263e3c3637db6"
     },
     "seedbag.py": {
-      "bytes": 29574,
-      "sha256": "8e4c37218c7e804ecc2ae2e13261e3d4a28b384bff4c0bcb3f6b1ee1cb5cb5ef"
+      "bytes": 35999,
+      "sha256": "000e2b2e403ea9797e18b464712da4deb158d7e97b9db4ad5a7ca98706145d99"
     },
     "seedbag_setup.py": {
       "bytes": 16305,
       "sha256": "df2adeda5fd899b7aa83cb8075c9a8d244af8547551110597d26ceae3ad2d05f"
     },
     "tests/test_cli.py": {
-      "bytes": 27755,
-      "sha256": "ef082f0c60762e865e318ec346334a3cda8532d86179f9573e8c6065d1b451bb"
+      "bytes": 28447,
+      "sha256": "920f7a30908c6901696072ab8626e2409b827d19e24879f947e8eb43cdc743be"
     },
     "tests/test_connector_export.py": {
       "bytes": 9112,
@@ -94,25 +106,40 @@
       "sha256": "3edbe32e3be8b0ddaeddadb55f8e1d1de40e9f4530a32e3fe213895c73169415"
     },
     "tests/test_git.py": {
-      "bytes": 23804,
-      "sha256": "fe0420b845218017b35e49d453f2c972db31d1a5153f92c267bfda3c46aebb68"
+      "bytes": 24734,
+      "sha256": "45f2ef24efd3593c4b1e1a623fcdc0905ce2c684ea6f9ca4fafda9cc92ca73d6"
+    },
+    "tests/test_hooks.py": {
+      "bytes": 28684,
+      "sha256": "7b3794ce578d1faa4dbc820c9daeaf7f6133573789f5ae6fe4803de1e6c33259"
     },
     "tests/test_scenarios.py": {
-      "bytes": 22593,
-      "sha256": "0a52fe82e2972afc4eea96deb9cebbb1fc2ff88b01ee42ee0fb4e7ce7bdddf4f"
+      "bytes": 22959,
+      "sha256": "1efec74aea1590257b15855944b712e198118ff8c18abd212d98893f8626fbfb"
     },
     "tests/test_setup.py": {
-      "bytes": 20835,
-      "sha256": "230e0bdb9fac5d4343b695adbda319d9e4082e91b5d68d6d8851e2d9b839713b"
+      "bytes": 21005,
+      "sha256": "75cd6c913371a1ad226f1df61f7b8d291f6c5f324b840efa12d2c03849ef80ea"
+    },
+    "tests/test_sync.py": {
+      "bytes": 17003,
+      "sha256": "f7c087a9ed185ccc927332a7ea0ba486bf333080432de77b39f0522d8ed520e7"
+    },
+    "tests/test_sync_adversarial.py": {
+      "bytes": 20071,
+      "sha256": "a98a7cd3a3f31c404bf87f625d08ce984844d333d926004506b9d7b5387fb9cf"
+    },
+    "validation/sync-live.json": {
+      "bytes": 2697,
+      "sha256": "7a752616ea8dac15f1bc0594fbaf917f723a86b34f4b6ebf69b573b366969217"
     },
     "validation/tests.json": {
-      "bytes": 1641,
-      "sha256": "03bb29946976c06d54a37d3db5538b3b48e26df8209a34474233ec1babeec4e7"
+      "bytes": 2178,
+      "sha256": "a33e16bc2a70417fcb5b20c589ef21743198bf8cad71013f4ab8cbf103279d85"
     },
     "validation/tests.txt": {
-      "bytes": 17841,
-      "sha256": "c449902fce29f226c5dac7643df2182ebe25842e55973e2feebf3cd4050956cd"
+      "bytes": 29075,
+      "sha256": "4f7385105860ec0d8ad3bb486bf81114fac99520c28b6f53873a571b135772b5"
     }
-  },
-  "excluded": "MANIFEST.json itself; Python caches; temporary files; private project histories and fixtures"
+  }
 }

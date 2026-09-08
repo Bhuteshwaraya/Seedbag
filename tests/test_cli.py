@@ -17,10 +17,11 @@ from unittest import mock
 
 PACKAGE = Path(__file__).resolve().parents[1]
 SEED_FILES = [
-    "seedbag.py", "seedbag_setup.py", "FIRST_RUN.md", "SEEDBAG_LICENSE.txt", "AGENTS.md", "PROJECT.md", "STATE.md", "README.md", "CONTINUE_HERE.md",
+    "seedbag.py", "seedbag_setup.py", "FIRST_RUN.md", "SYNC.md", "SEEDBAG_LICENSE.txt", "AGENTS.md", "PROJECT.md", "STATE.md", "README.md", "CONTINUE_HERE.md",
     ".gitignore", ".gitattributes", ".seedbag/ledger.json",
     ".seedbag/runtime/seedbag_core.py", ".seedbag/runtime/seedbag_context.py",
-    ".seedbag/runtime/seedbag_git.py",
+    ".seedbag/runtime/seedbag_git.py", ".seedbag/runtime/seedbag_sync.py",
+    ".seedbag/runtime/seedbag_hooks.py", ".seedbag/sync.json",
 ]
 
 
@@ -42,6 +43,7 @@ class InstalledCliTests(unittest.TestCase):
             "GIT_CONFIG_COUNT": "2", "GIT_CONFIG_KEY_0": "init.templateDir",
             "GIT_CONFIG_VALUE_0": str(empty), "GIT_CONFIG_KEY_1": "commit.gpgsign",
             "GIT_CONFIG_VALUE_1": "false", "PYTHONDONTWRITEBYTECODE": "1",
+            "SEEDBAG_SESSION_ID": "installed-cli-fixture-session",
         })
         for name in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR", "SEEDBAG_INCOMPLETE_CHECKPOINT"):
             self.env.pop(name, None)
@@ -63,6 +65,13 @@ class InstalledCliTests(unittest.TestCase):
 
     def cli(self, *args, root=None, package=False, expected=0):
         root = root or self.root
+        # Model the installed host's initial entry action without weakening the
+        # actual command gate. Dedicated sync tests also exercise missing entry.
+        if (not package and args[0] in {"capture", "apply", "check", "effect-run", "publish"}
+                and not (root / ".seedbag-local/sync-session.json").exists()):
+            policy = json.loads((root / ".seedbag/sync.json").read_text())
+            if policy["policy"] == "strict":
+                self.cli("sync-begin", "--setup", root=root)
         script = PACKAGE / "seedbag.py" if package else root / "seedbag.py"
         command = [sys.executable, "-B", str(script)]
         if not package:

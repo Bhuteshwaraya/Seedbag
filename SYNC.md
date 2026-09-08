@@ -1,0 +1,71 @@
+# Synchronization — instructions for the assistant
+
+The person asks to continue the project; you handle synchronization. A repository-backed Seedbag 0.4 project checks its shared starting point before editing, saves an audited checkpoint before handing control back, and pauses new project changes when that cannot be verified. Follow this project's own AGENTS.md. Do not upgrade existing projects from the seed.
+
+## What is enforced
+
+The installed runtime gates capture/apply, declared checks, new external executions, and checkpoint publication. It checks both the project branch and its cooperating writer claim through authenticated ordinary Git. A cached status report cannot open the gate. Reading context and recovering an already executed effect's outcome remain possible while new work is blocked.
+
+On a supported, trusted Codex host, the installed callbacks add checks at SessionStart, UserPromptSubmit, PreToolUse, and Stop. The pre-tool callback denies covered tools when verification fails. Host coverage is finite: specialized/hosted tools can fall outside it, and an already running command is not checked again for each filesystem write. Hook files must be reviewed and trusted through the host before they run. Report the observed activation and coverage; never infer activation from a configuration file alone. [Codex hook behavior](https://learn.chatgpt.com/docs/hooks).
+
+Without those active callbacks, the runtime commands still enforce their own gates, but ordinary edits through other tools depend on the assistant following these instructions. Do not describe that situation as a mechanical lock on every file. No background service runs when the application is closed, and no callback can guarantee a save after a crash or forced shutdown.
+
+## One project, a working copy, and a shared checkpoint
+
+The tracked `.seedbag/sync.json` binds the ledger's repository, ordinary Git remote, and project branch. The default branch is `main`. Effective fetch and push destinations must both match that repository, including supported GitHub SSH rewrites. Changing a remote or branch cannot silently redirect synchronization. The installed runtime and instruction files are reviewed before use; an incoming change to trusted code/instructions pauses automatic fast-forward for inspection.
+
+An append-only `seedbag-sync-claims` branch contains only a small writer record. It is coordination metadata, not another project or a competing state store. A normal, non-forced Git push arbitrates competing acquisitions: two siblings cannot both advance the same reference. The active record holds a random token and starting commit; private device paths and conversation identifiers remain in ignored `.seedbag-local/sync-session.json`. Never delete, rewrite, or force this reference to bypass a busy project.
+
+The entry callbacks acquire a claim even for a read-only project conversation; its verified closeout releases it. Opening a participating session and abandoning it before closeout can therefore leave a claim requiring recovery. The claim lasts until its owner verifies a checkpoint and releases it. It does not expire on a timer: a sleeping computer may still hold unpublished work. This coordinates participating writers, not a person or application editing GitHub outside the protocol. Fresh checks and normal pushes detect such changes at the next boundary; they cannot make a remote operation and every subsequent local write one atomic action.
+
+## Start or resume work
+
+Use the available Python 3.11+ interpreter, this project's installed launcher, and its actual root. These are assistant commands, not user homework. A stable conversation identity must be consistent across hooks and commands. The runtime uses `SEEDBAG_SESSION_ID`, then `CODEX_THREAD_ID` when present. On another host, supply `--session ACTUAL_SESSION_ID` before the subcommand throughout the conversation; choose one fresh stable ID if the host provides none. Do not reuse another active conversation's ID.
+
+1. Locate a matching local copy and inspect unfinished files. If none exists, clone this same repository into a new empty folder. Read its AGENTS.md and inspect its program before execution. A connector download is not a Git checkout.
+2. Complete missing prerequisites using FIRST_RUN.md. For a new project only, plant into a new empty folder, configure its ordinary Git remote, and run `sync-configure`. This validates the existing binding; it does not install credentials or silently change an established binding.
+3. Run `python seedbag.py sync-begin`. Only initial setup of a verified empty or single-root README bootstrap uses `sync-begin --setup`. That mode preserves the real bootstrap ancestry and cannot reopen setup for an existing project.
+4. Inspect the result. A clean older copy advances only by audited fast-forward. A valid clean local checkpoint ahead of GitHub is published and verified. If unfinished local files need sharing, inspect them and run `sync-begin --message "Save interrupted work" --paths EXACT_FILES --incomplete`. The assistant selects intended files; never stage the entire folder without review. Unknown or conflicting files are preserved and keep the gate closed.
+5. Restore context and current work. Proceed only after fresh `ready_to_edit: true`, with the same session identity. Local uncommitted work is expected during the admitted work batch; requiring byte equality after every edit would prevent any work. Each guarded command checks that the shared base and ownership have remained unchanged.
+
+Read-only `sync-status`, `context`, and `doctor` do not establish freshness. `doctor.ready` concerns local ledger/evidence integrity, and reports synchronization separately. Keep both conditions distinct.
+
+A Codex worktree may start on a temporary or detached branch. This protocol works on the bound project branch; do not change the policy to whichever branch the app selected. Locate the appropriate existing checkout, or retrieve a separate ordinary clone of the same repository when needed, preserving every existing working copy. Keep the actual working folder and its hook configuration consistent and report that location. No new GitHub repository is needed.
+
+## Save without making the person remember
+
+Before each substantive final response, save remaining input, update actual progress, run appropriate checks, and render. Then run:
+
+```sh
+python seedbag.py sync-checkpoint --message "Describe the saved work" --paths EXACT_INTENDED_FILES
+```
+
+The assistant replaces the placeholders with reviewed files, including the changed ledger and generated views. Every changed file must be accounted for; untracked surprises, conflicting staged versions, ignored new files, and local scratch are not silently swept into a commit. Keep temporary transaction inputs outside project files or in ignored local scratch. `publish` is an alias of this guarded checkpoint path, with destination consistency checks.
+
+The checkpoint audits the complete staged state and lineage, commits intended changes, uses a normal push, reads back the exact project commit, then releases the claim. A clean already-released checkpoint can be verified again without disturbing the next writer. Interrupted requests or uncertain effects may be saved with `--incomplete`; this never turns missing or stale completion evidence into a pass.
+
+A successful capture or local commit is not a shared save. If upload or readback is uncertain, inspect the exact local/shared commits before retrying. Do not repeat an external effect. Keep the claim until recovery verifies the checkpoint and release. Report the actual result in plain language, for example: “Saved to GitHub; the next conversation can continue,” or “Saved in this workspace; sharing is blocked by the connection.” Neither sentence claims an inaccessible computer has already updated.
+
+## Install callbacks on each supported device
+
+After the connection works, run `python seedbag.py install-host-hooks`. It prepares ignored `.codex/hooks.json` commands using the current Python and project paths. It preserves unrelated existing callbacks and refuses unsafe linked configuration. Review the generated commands and use the host's required trust control. Verify the actual callback registration and activation before saying automatic tool gating is active. A Git clone does not transfer trust or machine paths. Also install the separate Git snapshot hook with `install-hook`, preserving existing hooks.
+
+The startup/request callback attempts synchronization. If it is blocked, it provides recovery context while leaving conversation and safe inspection available. The pre-tool callback uses the documented deny response, with an internal deadline shorter than the host timeout. Exact recovery commands are permitted so the assistant can save or inspect a blocked project. It does not grant host permissions or authorize arbitrary shell commands as “recovery.”
+
+The Stop callback verifies/releases an already clean checkpoint, or requests one bounded assistant continuation to save intended dirty files. It never guesses which files may be published. If recovery still fails, it reports the unsaved state and avoids an endless response loop; the editing gate remains closed. The assistant must proactively checkpoint before its final response rather than relying solely on Stop. Application shutdown is not a reliable checkpoint trigger.
+
+## Recover an interrupted session
+
+If the previous conversation has stopped and this same folder still owns its unfinished claim, inspect its files and run `sync-recover --session NEW_SESSION_ID`, then `sync-begin` under that identity. This verifies the existing local token against the remote; it does not take ownership from another workspace or by itself open the gate. A failed connection before ownership, or a verified release whose acknowledgement was lost, can be recovered without inventing a new project.
+
+If another workspace owns the claim, ask it to save and finish through the user's authorized route. Never send another conversation an instruction without authorization, copy its token, or silently cancel it. If its files cannot be accessed, explain that its unpublished work cannot be inspected and keep new changes paused. A claim has no supported forced-takeover command in this release.
+
+If both histories changed, preserve both refs and all unfinished files. There is no automatic semantic reconciliation or select-a-winner command. The assistant must inspect the differences and prepare a separately reviewed recovery procedure into one preserved lineage; active hooks do not automatically admit arbitrary repair writes. Domain choices require the person's judgment only when existing instructions cannot resolve them. Do not force-push, discard a candidate, or treat manual JSON merging as ledger reconciliation. Read-only inspection and a complete handoff preserving new input remain available while substantive new project work stays blocked. Other preservation writes require an applicable host recovery route; this release does not include an automatic divergence-repair mode.
+
+## Cloud and local capability boundary
+
+The same engine works in a local or cloud workspace with Python, ordinary Git, and an authenticated route that can read and normally push both the project and writer references. Branch protections, read-only permissions, or a network restriction may prevent that route; handle the actual failure without replacing credentials unnecessarily.
+
+A Work conversation whose GitHub access exists only through connector tools cannot run this synchronization backend. A connector may still help identify/create the authorized repository, but it cannot supply a writer claim to this runtime or make an offline preparation commit part of the shared ancestry. Establish supported ordinary Git access or provide a complete handoff before calling 0.4 setup finished. The retained `connector-export` utility reports prepared bytes only and is not an alternative synchronized setup route.
+
+Explicitly local-only projects have an empty repository locator and no shared gate. Do not switch a repository-backed project to local-only to bypass a failed check. The cloud cannot inspect unpublished changes on an inaccessible computer; the writer claim can flag an unfinished participating session, but it cannot upload those files remotely. Existing projects keep their installed behavior until a separately designed migration, which this release does not provide.

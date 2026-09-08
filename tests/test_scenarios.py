@@ -347,8 +347,17 @@ with core.project_lock(Path(sys.argv[2])):
         self.apply(dict(op='check.add', id='portable', argv=command,
                         inputs=['verify.py', 'input.txt'], timeout=10))
         before = core.load(self.root)['ledger']['events'][0]
-        with patch.dict(os.environ, {'PATH': ''}):
+        # Restore only the changed key. Whole-environment restoration can drop
+        # inherited empty variables from the native Windows environment.
+        previous_path = os.environ.get('PATH')
+        try:
+            os.environ['PATH'] = ''
             result = core.run_check(self.root, 'portable')
+        finally:
+            if previous_path is None:
+                os.environ.pop('PATH', None)
+            else:
+                os.environ['PATH'] = previous_path
         self.assertEqual(result['code'], 0, result['output'])
         self.assertIn('portable check passed', result['output'])
         after = core.load(self.root)

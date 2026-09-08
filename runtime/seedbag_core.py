@@ -17,7 +17,7 @@ import tempfile
 import time
 from contextlib import contextmanager
 
-VERSION = "0.3.5"
+VERSION = "0.4.0"
 LEDGER = ".seedbag/ledger.json"
 ID = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{0,63}$")
 KINDS = {"requirement", "decision", "idea", "fact", "question"}
@@ -550,10 +550,31 @@ def _commit(root, old, operations, *, internal=False):
     return snapshot
 
 
+def _installed(root):
+    root = Path(root)
+    return any((root / name).exists() or (root / name).is_symlink()
+               for name in ("seedbag.py", ".seedbag/sync.json", ".seedbag/runtime"))
+
+
+def _require_sync(root):
+    """Installed programs enforce their own gate; bare core fixtures are not installations."""
+    if _installed(root):
+        import seedbag_sync
+        seedbag_sync.require_ready(root)
+
+
 def apply(root, operations, expected_revision, expected_digest):
     with project_lock(root):
         old = load(root)
         _need(type(expected_revision) is int and expected_revision == old["revision"] and expected_digest == old["digest"], "Stale revision or digest; reread and reconcile before writing")
+        # Outcome records are recovery, not permission to execute another effect.
+        # Preserve them locally even if connection/ownership changed during execution.
+        recovery = isinstance(operations, list) and operations and all(
+            isinstance(op, dict) and op.get("op") in {"effect.return", "effect.resolve"}
+            for op in operations
+        )
+        if not recovery:
+            _require_sync(root)
         try:
             return _commit(root, old, operations)
         except (KeyError, TypeError, ValueError) as exc:
@@ -592,6 +613,7 @@ def _execute(argv, root, timeout):
 
 
 def run_check(root, ident):
+    _require_sync(root)
     before = load(root)
     definition = _get(before["state"], "checks", ident)
     binding = input_digest(root, definition["inputs"])

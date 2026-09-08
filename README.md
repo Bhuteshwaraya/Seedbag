@@ -21,7 +21,7 @@ Copy this prompt into your AI conversation. Replace **PROJECTNAME** with your pr
 ```text
 Create a new private project called PROJECTNAME with its own private GitHub repository under my account, using https://github.com/Bhuteshwaraya/Seedbag.
 
-Resolve the published v0.3.5 release to one exact commit. Read START_HERE.md there, follow its setup instructions, and use that same commit throughout.
+Resolve the published v0.4.0 release to one exact commit. Read START_HERE.md there, follow its setup instructions, and use that same commit throughout.
 
 If you can access my computer, create the working folder locally. If you have a capable cloud workspace, create the project there and verify its private GitHub checkpoint. Save a continuation prompt that lets a later local conversation retrieve and continue the same project.
 
@@ -48,14 +48,22 @@ Your project's GitHub front page saves a ready-to-use request with its actual ad
 
 For example, after a capable Work conversation saves the project to GitHub, you can paste its continuation prompt into local Codex. The assistant finds an existing local copy or retrieves the same repository into a local folder, then recovers the saved work.
 
-Each conversation needs suitable tools and account access. A repository connection alone does not give an assistant access to your computer or the ability to run the project. Some cloud conversations can save their first checkpoint through connected GitHub tools; creating the private repository may still need an account action. The assistant should guide that step and verify the saved files before handing the project over.
+Each conversation needs suitable tools and account access. A repository connection alone does not give an assistant access to your computer or the ability to run the project. The current synchronization engine needs a workspace with an authenticated Git connection; a cloud conversation with only a GitHub file connector must finish setup in a capable environment. The assistant checks this and guides the handoff.
+
+## Switch conversations without managing copies
+
+Before starting work, the assistant checks the project's shared version. A clean older copy can catch up automatically. Before returning to you, it saves and verifies a checkpoint so the next conversation can continue. You do not need to remember a Git command or a special closeout prompt.
+
+If another participating conversation has unfinished work, the connection is unavailable, or two versions conflict, new changes pause while the assistant handles recovery. It preserves the work and explains any action that actually needs you.
+
+Seedbag includes Codex callbacks that check before covered editing tools and when the assistant finishes. They must be reviewed and activated on each supported device. Without active callbacks, the program still guards its own record and save commands, while other edits depend on the assistant following the project instructions. It cannot save after every crash or retrieve files that never left another computer. [How synchronization works](SYNC.md).
 
 ## Current status and limits
 
-Seedbag 0.3.5 is an early release. [The validation record](VALIDATION.md) explains what has been tested and what remains unverified.
+Seedbag 0.4.0 is an early release. [The validation record](VALIDATION.md) explains what has been tested and what remains unverified.
 
 Continuity depends on the assistant capturing important input and interpreting it faithfully. Seedbag does not automatically receive every chat message or recover conversations that were never saved. Changes saved only on one computer are unavailable elsewhere until shared to the private repository. Applications need suitable file access and tools to operate the project.
 
 Seedbag is for new projects. Existing projects are not migrated or automatically updated.
 
-[Setup instructions](START_HERE.md) · [First-time setup](FIRST_RUN.md) · [Technical reference](OPERATIONS.md) · [Validation](VALIDATION.md) · [MIT License](LICENSE)
+[Setup instructions](START_HERE.md) · [First-time setup](FIRST_RUN.md) · [Synchronization](SYNC.md) · [Technical reference](OPERATIONS.md) · [Validation](VALIDATION.md) · [MIT License](LICENSE)

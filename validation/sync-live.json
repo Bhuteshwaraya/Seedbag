@@ -1,0 +1,58 @@
+{
+  "status": "passed",
+  "date": "2026-09-08",
+  "provider": "GitHub",
+  "repository_visibility": "private",
+  "final_transport_probe": {
+    "successful": true,
+    "operation": "read both known private GitHub refs using final temporary-file stdio",
+    "mutations": false,
+    "elapsed_seconds": 1.297,
+    "source_sha256": "541363a76f599c20373d381fd5a967d2a3288c08a25fb53135f335ac58eb7d15"
+  },
+  "default_branch": "main",
+  "workspaces": 3,
+  "platform": "Windows",
+  "tested": [
+    "real private GitHub README ancestry",
+    "installed runtime and capture",
+    "verified checkpoint and writer release",
+    "competing workspace blocked",
+    "second workspace update",
+    "local audited fast-forward",
+    "unfinished local file preserved",
+    "stopped same-folder session recovery",
+    "exact intended-file publication",
+    "fresh private clone equality",
+    "private visibility and main default branch",
+    "unchanged permanent continuation request"
+  ],
+  "writer_released": true,
+  "all_three_final_trees_equal": true,
+  "permanent_continuation_unchanged": true,
+  "elapsed_seconds": 275.702,
+  "installed_source_sha256": {
+    "seedbag.py": "000e2b2e403ea9797e18b464712da4deb158d7e97b9db4ad5a7ca98706145d99",
+    "seedbag_setup.py": "df2adeda5fd899b7aa83cb8075c9a8d244af8547551110597d26ceae3ad2d05f",
+    "runtime/seedbag_context.py": "4902f4c90e8e771d29613bf76efcc3696008e0f765b5ddcbfe9bed6fc5ee4654",
+    "runtime/seedbag_core.py": "736c54631ecc6cd204dd0c82ae8866b5a56c995ab179fd1adc5ecbd782c99deb",
+    "runtime/seedbag_git.py": "b915aaf1f5e47e238ddbf4714b0a9b0579d4185f3aa54384329a6dbc1b04f233",
+    "runtime/seedbag_hooks.py": "d8f4664fac6c2ce80b9e93eb3162c9f7a093f4cf0928f613acbcdd3f8157a365",
+    "runtime/seedbag_sync.py": "5c4c0b675785e112a2fdf30a714411d4fd864c92dff01c350e57ea26fca859cb"
+  },
+  "release_files_changed_after_live_flow": [
+    "runtime/seedbag_git.py",
+    "runtime/seedbag_hooks.py",
+    "runtime/seedbag_sync.py"
+  ],
+  "later_changes": "Reserved writer-branch binding validation, bounded Git subprocess stdio for timeout handling, and narrower recovery diagnostics. Covered by the final full suite; the live flow used the identified development snapshot.",
+  "host_discovery": {
+    "codex_version": "0.153.4",
+    "definitions": 4,
+    "warnings": 0,
+    "errors": 0,
+    "observed_trust": "untrusted",
+    "activation_verified": false
+  },
+  "boundary": "Three synthetic folders and the installed CLI used real authenticated GitHub transport. No current-release Work cloud conversation was launched. Actual Codex definition discovery and direct callback execution were tested, not a full hosted-model loop. No existing user project was changed."
+}

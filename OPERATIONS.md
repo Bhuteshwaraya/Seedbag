@@ -1,4 +1,4 @@
-# Seedbag 0.3.5 operations — for the assistant
+# Seedbag 0.4.0 operations — for the assistant
 
 The person starts with the creation prompt in README.md. Read START_HERE.md for your setup and routing duties. The commands below are for you to execute through available tools, never a checklist to assign to a person who asked you to handle setup. You also own obtaining the package, locating an available interpreter, Git setup, and a complete handoff when this application lacks the necessary capabilities.
 
@@ -24,6 +24,16 @@ Creation can run in a temporary cloud workspace with Python, Git, and authorized
 
 `.seedbag-local/` contains local working state such as the advisory lock and is ignored by Git. The default `.gitattributes` preserves exact bytes (`* -text`), because automatic newline conversion can invalidate evidence between the working directory, staged snapshot, and another device. Reconsider that policy only together with its effect on byte-bound checks.
 
+## Synchronize before work and save before replying
+
+Read [SYNC.md](SYNC.md) for the enforced gates, stable session identity, startup/checkpoint workflow, host callback activation, and interruption recovery. A repository-backed project needs authenticated ordinary Git in either a local or cloud workspace. Connector-only publication does not open this gate.
+
+After initial remote setup, run `sync-configure` and `sync-begin --setup` before capture; that exception is restricted to a verified empty or README bootstrap. On normal continuation run `sync-begin`, resolving preserved local changes with exact reviewed paths when needed. Commands infer SEEDBAG_SESSION_ID or CODEX_THREAD_ID; on other hosts provide the same global `--session ID` before each subcommand. Use a fresh stable conversation identity, never another active conversation's identity.
+
+Before a substantive final response, use `sync-checkpoint` with all exact intended changed files. The user need not request this. It verifies the shared commit and releases the writer; interrupted input can be preserved with `--incomplete`. For a blocked same-folder writer whose prior session has stopped, use `sync-recover --session ID`, then synchronize before new work. This cannot take over another workspace.
+
+With active trusted Codex callbacks, startup and new requests initiate sync, covered tools get a fresh preflight, and Stop requests a checkpoint if needed. Install with `install-host-hooks`, then follow and verify host trust/activation. A generated file alone is not active protection. See SYNC.md for the finite host coverage and connection-failure recovery.
+
 ## Command reference
 
 | Command | Actual behavior |
@@ -34,14 +44,21 @@ Creation can run in a temporary cloud workspace with Python, Git, and authorized
 | `inspect [--kind KIND] [--id ID]` | Returns a current record or category with the current revision/digest. Default kind is `current`. |
 | `context [--work ID] [--budget BYTES]` | Emits bounded relevant context; defaults to the current `next_work` and 24,000 actual UTF-8 output bytes. It performs no remote fetch. |
 | `render` | Creates missing views or repairs an exact recognizable older generated revision. Refuses handwritten or unrecognized content. |
-| `doctor` | Validates the ledger, current generated views, pending captures/effects, and evidence for work marked done. Does not execute checks. |
+| `doctor` | Validates local records/views/evidence; reports synchronization separately without a fresh network check. `ready` is local integrity, not permission to edit. |
 | `check ID` | Executes the declared command in the project directory, then records its result only if the ledger and declared input bytes remained unchanged. |
 | `status [--fetch]` | Reports dirty files, local commit, ahead/behind/divergence, cached/shared-reference freshness, and candidate branch metadata. `--fetch` fetches configured remotes. |
 | `candidate REF` | Reads `STATE.md` at an exact remote-tracking ref discovered through status, without checkout or promotion. This is candidate text, not validation of the candidate's claims. |
-| `publish --message TEXT --paths FILE... [--remote NAME] [--branch NAME] [--incomplete]` | Stages exact intended files, validates the staged snapshot, commits when needed, fetches, performs a normal push, and reads back the exact remote tip. Defaults to remote `origin` and the current local branch name. |
-| `connector-export --commit REF --output FILE` | Audits a complete initial parentless commit and exports its exact Git tree and base64 blobs for connected GitHub tools. Requires a normal GitHub repository locator and an unused output outside project files. Reports `prepared_not_shared`; it never uploads or verifies GitHub. Follow FIRST_RUN.md for the complete initial publication procedure. |
+| `publish --message TEXT --paths FILE... [--remote NAME] [--branch NAME] [--incomplete]` | Alias for the guarded checkpoint below; any supplied destination must match the tracked binding. |
+| `connector-export --commit REF --output FILE` | Legacy initial-snapshot preparation utility. Audits exact committed bytes but neither shares nor grants synchronized readiness. It is not a 0.4 setup route. |
 | `gate [--incomplete]` | Checks the full staged Git index, including generated views, referenced files, current completion evidence, and preserved committed ledger history. Does not commit. |
 | `audit --base REF [--commit REF] [--incomplete]` | Audits a committed snapshot against an explicit base and its immediate parents without checkout. Commit defaults to `HEAD`. Useful for a reviewer or a configured CI job; running it does not install remote CI or branch protection. |
+| `sync-configure [--remote NAME] [--branch NAME]` | Verifies the tracked repository/transport binding without changing credentials or silently rebinding an existing policy. |
+| `sync-begin [--session ID] [--setup] [--message TEXT --paths FILE...] [--incomplete]` | Freshly checks GitHub and acquires the writer; audits/advances a clean older copy or publishes reviewed local work. Setup is restricted to a new bootstrap. |
+| `sync-checkpoint --message TEXT [--paths FILE...] [--session ID] [--incomplete]` | Requires the owned writer, audits intended files, commits, normally pushes, verifies the exact shared commit, and releases the writer. |
+| `sync-status` | Inspects local synchronization state without granting fresh readiness. |
+| `sync-recover --session ID` | Rebinds this folder's verified unfinished claim after the old session stopped; requires a subsequent sync-begin. Does not take another workspace's claim. |
+| `install-host-hooks` | Prepares ignored per-device Codex callbacks; actual host review, trust, and activation remain separate. |
+| `hook` | Reads one host callback event from JSON stdin and emits its protocol response. |
 | `install-hook` | Installs an optional local pre-commit gate using this project's runtime and the current Python executable. Refuses to overwrite an existing hook or configured hooks path. |
 | `effect-run ID [--timeout SECONDS]` | Persists an attempt before running the declared, already authorized command. A returned command remains unresolved until its external outcome is inspected. Default timeout 60 seconds; valid range 1–300. |
 | `effect-resolve ID --receipt FILE --outcome confirmed\|not_performed` | Records the inspected outcome and exact receipt-file binding for a running/returned attempt. Does not rerun it. |
@@ -191,15 +208,15 @@ Done work needs at least one declared check, all its checks passing and current,
 
 ## Local saves, checkpoints, and interrupted work
 
-Successful capture/apply/check operations save locally. They do not upload anything. A regular `publish` requires reconciled captures and effects plus valid evidence for work already marked done. Planned, in-progress, or blocked work can remain; a regular checkpoint is not a certificate that the entire project is finished.
+Successful capture/apply/check operations save locally after checking the active shared starting point. They do not upload anything; the assistant checkpoints before its substantive final response. A regular `publish` requires reconciled captures and effects plus valid evidence for work already marked done. Planned, in-progress, or blocked work can remain; a regular checkpoint is not a certificate that the entire project is finished.
 
 For a newly planted project, the first publication needs the complete planted program and state. An illustrative initial file list is:
 
 ```sh
-python seedbag.py publish --message "Initial project checkpoint" --paths seedbag.py seedbag_setup.py FIRST_RUN.md SEEDBAG_LICENSE.txt AGENTS.md PROJECT.md STATE.md README.md CONTINUE_HERE.md .gitignore .gitattributes .seedbag/ledger.json .seedbag/runtime/seedbag_core.py .seedbag/runtime/seedbag_context.py .seedbag/runtime/seedbag_git.py
+python seedbag.py publish --message "Initial project checkpoint" --paths seedbag.py seedbag_setup.py FIRST_RUN.md SEEDBAG_LICENSE.txt AGENTS.md PROJECT.md STATE.md README.md CONTINUE_HERE.md .gitignore .gitattributes .seedbag/ledger.json .seedbag/runtime/seedbag_core.py .seedbag/runtime/seedbag_context.py .seedbag/runtime/seedbag_git.py .seedbag/runtime/seedbag_sync.py .seedbag/runtime/seedbag_hooks.py .seedbag/sync.json SYNC.md
 ```
 
-Add every registered owner, required input, receipt, and intended domain file that exists in your actual project. This command requires an already configured remote. For later checkpoints, name the intended changed files; already committed unchanged files remain in the staged snapshot. Directories, duplicate paths, unresolved Git conflicts, unrelated pre-staged files, and mismatched staged/working versions of an intended file are refused. Review the index after any failed publication: files may already have been staged or committed locally before a network refusal.
+Add every registered owner, required input, receipt, and intended domain file that exists in your actual project. This command requires an already configured remote and a verified initial writer from sync-begin --setup. For later checkpoints, name the intended changed files; already committed unchanged files remain in the staged snapshot. Directories, duplicate paths, unresolved Git conflicts, unrelated pre-staged files, and mismatched staged/working versions of an intended file are refused. Review the index after any failed publication: files may already have been staged or committed locally before a network refusal.
 
 For an interruption with unprocessed capture text or an uncertain external attempt, use an explicitly incomplete savepoint:
 
@@ -211,15 +228,11 @@ Use the full initial list if this is the first publication, plus any needed doma
 
 For a local commit without sharing, use ordinary Git staging and commit commands. Run `python seedbag.py gate` after staging if the optional hook is absent. `gate --incomplete` checks an interrupted snapshot, but does not automatically configure a later ordinary `git commit`; the installed hook defaults to the regular gate. The normal interrupted publication path above handles its hook flag itself.
 
-Publication never force-pushes, automatically merges, resets, or discards another branch. If a shared branch is ahead or divergent, the local commit is preserved and publication stops. The guard preserves the exact ledger prefix of every immediate merge parent. Consequently, independently diverged event ledgers cannot be joined by a two-parent merge, even after manually resolving their JSON. Code-only merges or ledgers whose histories remain prefix-compatible can pass. For divergent ledgers, preserve the separate candidate branch, review its intent and provenance, and explicitly record the selected changes as new transactions in the chosen lineage. Do not claim the original competing events were merged. This version supports portable checkpoints with one active writer, not automatic distributed reconciliation.
+Publication never force-pushes, automatically merges, resets, or discards another branch. If a shared branch is ahead or divergent, the local commit is preserved and publication stops. The guard preserves the exact ledger prefix of every immediate merge parent. Consequently, independently diverged event ledgers cannot be joined by a two-parent merge, even after manually resolving their JSON. Code-only merges or ledgers whose histories remain prefix-compatible can pass. For divergent ledgers, preserve the separate candidate branch, review its intent and provenance, and explicitly record the selected changes as new transactions in the chosen lineage. Do not claim the original competing events were merged. This version coordinates participating writers and checks freshness, but does not automatically reconcile independently diverged ledgers. See SYNC.md for safe pause and recovery boundaries.
 
-## Initial publication without shell Git credentials
+## Connector preparation is not synchronized publication
 
-A cloud execution workspace can run Python and local Git while its GitHub connection is available only through host tools. For a new project's first checkpoint, use `connector-export` after the staged gate and one offline root commit. The complete procedure is in [FIRST_RUN.md](FIRST_RUN.md#first-checkpoint-through-connected-github-tools), which is also installed inside each project.
-
-The remote destination must be a verified private, README-only repository created for this setup. If the connection cannot create it, guide the necessary account action or use an already authorized capable assistant; report that assistance. Export only audited committed bytes, compare uploaded blob and tree hashes, create the remote commit with the verified bootstrap as its sole parent, recheck the branch, update without force, and verify the exact checkpoint by readback. Preserve the difference between the cloud preparation commit and the actual published commit.
-
-The exporter does not automate host connector calls or attest supplied API receipts. A prepared export alone is not shared state. This narrow route does not update an existing Seedbag repository: subsequent writes use an authenticated checkout of the actual published history and ordinary `publish`, including when the next conversation brings the project into a local folder. Never replay an old export, replace a ledger, or force a branch to avoid that boundary.
+The retained `connector-export` utility audits a single initial parentless snapshot and produces exact bytes for inspection or a separately reviewed transfer. It does not upload, authenticate ordinary Git, acquire a writer, or verify remote observations. Do not use it to bypass the 0.4 startup gate or claim connector-only Work setup is complete. Use the supported ordinary Git route in FIRST_RUN.md and SYNC.md, or preserve a handoff.
 
 ## Hooks and committed-snapshot auditing
 
@@ -254,7 +267,7 @@ A mutation can save the ledger before updating generated views. If that final re
 
 - **Known stale or missing generated view:** run `render`. An old marker alone is insufficient; the complete old file must match the rendering of its recorded historical revision before replacement is allowed.
 - **Handwritten generated view:** preserve that file's contents, interpret any meaningful additions into source-linked records, and explicitly reconcile the derived file. `render` will not silently destroy the edits. An apply command may already have saved the ledger before its render step refused; inspect current revision before retrying.
-- **Stale writer:** reread the ledger and reconcile changed records. The local process lock and expected revision/digest prevent ordinary same-project overwrites; they do not coordinate disconnected clones.
+- **Stale writer:** reread the ledger and reconcile changed records. The local process lock and expected revision/digest prevent ordinary same-project overwrites; the separate synchronization protocol coordinates participating connected writers, while disconnected work remains blocked.
 - **Failed check or changed requirements:** leave work open, or reopen previously done work, repair the issue, then rerun the meaningful check. A successful earlier receipt is not a current pass.
 - **Uncertain push:** inspect local commits and fetch/read the intended remote before retrying. A commit may exist locally even when sharing failed. Claim shared state only when the exact intended commit is verified remotely.
 - **Runtime unavailable in the AI application:** read `AGENTS.md`, the available generated views, and relevant domain owners, preserving branch/commit identity when reading a shared repository. Label proposed edits as unsaved and checks as unrun until a writer with file access and Python execution actually applies them. A change of AI provider or device does not itself transfer access or synchronize files.

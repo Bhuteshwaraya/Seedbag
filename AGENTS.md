@@ -11,3 +11,5 @@ Plant only into new empty folders. Existing projects keep their independent runt
 Use an available Python 3.11+ interpreter. Run relevant tests under tests/ for changes, and the complete suite before a release. Refresh validation evidence and MANIFEST.json only from the actually tested files. The repository workflow runs the tests; it is not automatically installed into planted projects.
 
 Keep the MIT license notice with distributed runtime copies. New projects use SEEDBAG_LICENSE.txt for this notice so their own content can have a separately chosen license. User requests and existing authorization govern work; do not add repeated approval rituals.
+
+Repository-backed projects must preserve strict synchronization, exact remote binding, shared writer ownership, and truthful host-hook activation status. Test races, stale/dirty copies, connection loss, and uncertain publication. No connector-only automatic-sync claim or forced writer takeover. Follow SYNC.md; do not claim instructions mechanically protect arbitrary tools without verified host callbacks.
