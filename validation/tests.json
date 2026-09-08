@@ -1,0 +1,23 @@
+{
+  "version": "0.3.0",
+  "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "git": "git version 2.53.0.windows.3",
+  "tests_run": 59,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "successful": true,
+  "elapsed_seconds": 52.8,
+  "code_sha256": {
+    "runtime/seedbag_context.py": "4902f4c90e8e771d29613bf76efcc3696008e0f765b5ddcbfe9bed6fc5ee4654",
+    "runtime/seedbag_core.py": "d2cd3d531f335184364774623c612b759bbdfc199ba906fea9ae0bc5a56704c0",
+    "runtime/seedbag_git.py": "1aa6ff8d873c401568dbc0673a208465eafeb6ebca8282fb6e15ec884caa20df",
+    "seedbag.py": "16e6bda4b9823d8a0e4a259f8b3c2dcfe64d03b239e5934679fdb99ff5526c00",
+    "tests/test_cli.py": "d760fa6b354b381cfbc0807ba24456bfa5d0bc904e6fd57af950be511383a911",
+    "tests/test_context.py": "92b17b1fa3e41eca2ef9ed9e12ec5b020d41d481ae1a671ca7922246e4a5ed46",
+    "tests/test_git.py": "6d4dbe90974ed24331916e618110850389ad13ac391a3e844578cb223e289edd",
+    "tests/test_scenarios.py": "282009bca89236754fa52f48bad25582d7d8bc9c5474e9e3c9662361be4f69ee"
+  },
+  "boundary": "Automated tests on this Windows host using disposable local projects and local bare Git remotes; no live project was migrated and no external effect service was used."
+}
