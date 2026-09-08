@@ -1,6 +1,6 @@
-# Seedbag
+<p align="center"><strong>Seedbag</strong></p>
 
-**Continue your project without rebuilding its history in every new AI chat.**
+<h1 align="center">Continue your project without rebuilding its history in every new AI chat.</h1>
 
 ![The same project notes travel from one conversation to another, carried in a canvas Seedbag.](assets/seedbag-hero.webp)
 

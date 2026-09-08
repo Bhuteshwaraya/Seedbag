@@ -42,8 +42,8 @@
       "sha256": "a43e938522397afcf74cbde121911773051011bf61640028003a9059c183be20"
     },
     "README.md": {
-      "bytes": 5450,
-      "sha256": "e0eed17f060df097ab31393ac2ee762dc53783242029bf57674fec1af12bb93f"
+      "bytes": 5507,
+      "sha256": "fa83b6daba2c035ec2c67f019d1577b700fd3e00e4db0cbab26afbe58affb179"
     },
     "runtime/seedbag_context.py": {
       "bytes": 15526,
