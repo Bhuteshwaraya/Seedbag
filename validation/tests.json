@@ -8,7 +8,7 @@
   "errors": 0,
   "skipped": 0,
   "successful": true,
-  "elapsed_seconds": 109.582,
+  "elapsed_seconds": 107.3,
   "code_sha256": {
     "runtime/seedbag_context.py": "4902f4c90e8e771d29613bf76efcc3696008e0f765b5ddcbfe9bed6fc5ee4654",
     "runtime/seedbag_core.py": "db2b40aa8dba2831a07f3785b610cfa0021f905af5e64d012e2fad57e1ff82a3",
@@ -16,7 +16,7 @@
     "seedbag.py": "8e4c37218c7e804ecc2ae2e13261e3d4a28b384bff4c0bcb3f6b1ee1cb5cb5ef",
     "seedbag_setup.py": "df2adeda5fd899b7aa83cb8075c9a8d244af8547551110597d26ceae3ad2d05f",
     "tests/test_cli.py": "ef082f0c60762e865e318ec346334a3cda8532d86179f9573e8c6065d1b451bb",
-    "tests/test_connector_export.py": "c1a6eaf6d6db95cd83f7300075083621fa47eaae0d18c148b07eb6bac98ef3b6",
+    "tests/test_connector_export.py": "e7ddadd6775b3ef842f37d8f11c6439b3a8b3f5c6cd6697350ae959f8a77962f",
     "tests/test_context.py": "3edbe32e3be8b0ddaeddadb55f8e1d1de40e9f4530a32e3fe213895c73169415",
     "tests/test_git.py": "fe0420b845218017b35e49d453f2c972db31d1a5153f92c267bfda3c46aebb68",
     "tests/test_scenarios.py": "0a52fe82e2972afc4eea96deb9cebbb1fc2ff88b01ee42ee0fb4e7ce7bdddf4f",

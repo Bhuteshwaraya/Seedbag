@@ -43,6 +43,9 @@ class ConnectorExportTests(unittest.TestCase):
         self.g("config", "--local", "core.autocrlf", "false")
         self.binary = b"\x00\xff\x80\r\nexact bytes\x00\n"
         (self.root / "sample.bin").write_bytes(self.binary)
+        if os.name != "nt":
+            sample = self.root / "sample.bin"
+            sample.chmod(sample.stat().st_mode | 0o111)
         self.g("add", "--", *git.REQUIRED_FILES, "sample.bin")
         self.g("update-index", "--chmod=+x", "sample.bin")
         self.g("commit", "-m", "Initial project fixture")

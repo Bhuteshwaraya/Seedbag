@@ -113,6 +113,6 @@ test_url_allowlist_rejects_credentials_and_arbitrary_targets (test_setup.SetupTe
 test_working_probes_still_require_assistant_judgment (test_setup.SetupTests.test_working_probes_still_require_assistant_judgment) ... ok
 
 ----------------------------------------------------------------------
-Ran 113 tests in 109.582s
+Ran 113 tests in 107.300s
 
 OK

@@ -1,6 +1,6 @@
 # Seedbag 0.3.5 validation
 
-The release program passed **113 tests**, with zero failures, errors, or skips, on Windows 11 using Python 3.12.14 and Git 2.53.0.windows.3. The run took 109.582 seconds. The included `validation/tests.json` identifies the exact tested Python files by SHA-256; `validation/tests.txt` contains the complete named results. The public repository also runs the suite through GitHub Actions on Windows and Ubuntu with Python 3.11 and 3.12; consult the run for its result rather than treating configuration as a passing check.
+The release program passed **113 tests**, with zero failures, errors, or skips, on Windows 11 using Python 3.12.14 and Git 2.53.0.windows.3. The run took 107.300 seconds. The included `validation/tests.json` identifies the exact tested Python files by SHA-256; `validation/tests.txt` contains the complete named results. The public repository also runs the suite through GitHub Actions on Windows and Ubuntu with Python 3.11 and 3.12; consult the run for its result rather than treating configuration as a passing check.
 
 The assistant or maintainer runs the included suite from this package. This is not a project-creation step for the user:
 
