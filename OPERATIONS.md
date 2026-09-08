@@ -1,4 +1,4 @@
-# Seedbag 0.3.2 operations — for the assistant
+# Seedbag 0.3.3 operations — for the assistant
 
 The person starts with the creation prompt in README.md. Read START_HERE.md for your setup and routing duties. The commands below are for you to execute through available tools, never a checklist to assign to a person who asked you to handle setup. You also own obtaining the package, locating an available interpreter, Git setup, and a complete handoff when this application lacks the necessary capabilities.
 
@@ -14,7 +14,11 @@ Run commands inside the planted project. `python` below means an installed Pytho
 
 `.seedbag/ledger.json` is the canonical continuity state. Each validated transaction appends a revision linked to the previous digest. `PROJECT.md` and `STATE.md` are deterministic views of that ledger. The product itself remains in ordinary domain files, code, and artifacts; the ledger routes the assistant to those files rather than copying all of them into every continuation.
 
+`README.md` is the planted project's human recovery page. It links goals, progress, and the permanent prompt in `CONTINUE_HERE.md`. The installer generates both entry files from the same paragraph. Their marked prompt blocks must match; the continuation locator must identify the repository recorded in the ledger. `doctor`, the staged gate, and committed audits check required project files and those blocks. Snapshot audits also preserve the entire continuation file against ledger-bearing parents. The README prose outside its prompt block may develop with the project. Repository relocation has no supported migration command in this release; do not rewrite the entry during ordinary work.
+
 Use the same files in this project's working directory and its own Git repository. Unpushed changes exist only on that device. Different branches are candidate histories of the same project; neither location nor recency establishes acceptance. The original seed repository is only the planting source. There are no automatic upgrades or migration commands.
+
+Creation can run in a temporary cloud workspace with Python, Git, and authorized private publication. Verify a complete remote checkpoint before calling that setup durable; report computer-local availability separately. On a later computer, inspect a matching existing folder or clone the same repository into a new empty destination using ordinary Git. Verify the selected commit and project identity, inspect the installed program, run its own `context` and `doctor`, and install its local hook. Do not run `init` to resume. A connector download can provide a verified read-only snapshot, but is not a Git checkout or proof of writable synchronization.
 
 `.seedbag-local/` contains local working state such as the advisory lock and is ignored by Git. The default `.gitattributes` preserves exact bytes (`* -text`), because automatic newline conversion can invalidate evidence between the working directory, staged snapshot, and another device. Reconsider that policy only together with its effect on byte-bound checks.
 
@@ -189,7 +193,7 @@ Successful capture/apply/check operations save locally. They do not upload anyth
 For a newly planted project, the first publication needs the complete planted program and state. An illustrative initial file list is:
 
 ```sh
-python seedbag.py publish --message "Initial project checkpoint" --paths seedbag.py seedbag_setup.py FIRST_RUN.md SEEDBAG_LICENSE.txt AGENTS.md PROJECT.md STATE.md CONTINUE_HERE.md .gitignore .gitattributes .seedbag/ledger.json .seedbag/runtime/seedbag_core.py .seedbag/runtime/seedbag_context.py .seedbag/runtime/seedbag_git.py
+python seedbag.py publish --message "Initial project checkpoint" --paths seedbag.py seedbag_setup.py FIRST_RUN.md SEEDBAG_LICENSE.txt AGENTS.md PROJECT.md STATE.md README.md CONTINUE_HERE.md .gitignore .gitattributes .seedbag/ledger.json .seedbag/runtime/seedbag_core.py .seedbag/runtime/seedbag_context.py .seedbag/runtime/seedbag_git.py
 ```
 
 Add every registered owner, required input, receipt, and intended domain file that exists in your actual project. This command requires an already configured remote. For later checkpoints, name the intended changed files; already committed unchanged files remain in the staged snapshot. Directories, duplicate paths, unresolved Git conflicts, unrelated pre-staged files, and mismatched staged/working versions of an intended file are refused. Review the index after any failed publication: files may already have been staged or committed locally before a network refusal.

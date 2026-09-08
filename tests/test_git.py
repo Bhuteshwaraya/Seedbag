@@ -9,12 +9,14 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "runtime"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import seedbag_core as core
 import seedbag_context as context
 import seedbag_git as git
+import seedbag
 
 
-CORE_FILES = [".seedbag/ledger.json", "PROJECT.md", "STATE.md"]
+CORE_FILES = list(git.REQUIRED_FILES)
 
 
 class GitTests(unittest.TestCase):
@@ -25,17 +27,14 @@ class GitTests(unittest.TestCase):
         self.empty = self.base / "empty-templates"
         self.empty.mkdir()
         self.root = self.base / "project"
-        core.initialize(self.root, "Git fixture")
-        (self.root / ".gitignore").write_text(".seedbag-local/\n__pycache__/\n", encoding="utf-8")
-        (self.root / ".gitattributes").write_text("* text eol=lf\n", encoding="utf-8")
-        context.render(self.root)
+        self.remote = self.base / "remote.git"
+        seedbag.plant(self.root, "Git fixture", self.remote.as_posix(), use_git=False)
         self.g(self.root, "init", "--initial-branch=main")
         self.configure(self.root)
-        self.g(self.root, "add", "--", *CORE_FILES, ".gitignore", ".gitattributes")
+        self.g(self.root, "add", "--", *CORE_FILES)
         git.gate(self.root)
         self.g(self.root, "commit", "-m", "Initial seed fixture")
         self.initial = self.g(self.root, "rev-parse", "HEAD").strip()
-        self.remote = self.base / "remote.git"
         self.g(self.base, "init", "--bare", "--initial-branch=main", str(self.remote))
         self.g(self.root, "remote", "add", "origin", str(self.remote))
         self.g(self.root, "push", "-u", "origin", "main")
@@ -71,6 +70,73 @@ class GitTests(unittest.TestCase):
 
     def stage_core(self, root=None):
         self.g(root or self.root, "add", "--", *CORE_FILES)
+
+    def test_gate_requires_published_entry_and_runtime_files_not_just_local_copies(self):
+        for name in ("README.md", "CONTINUE_HERE.md", ".seedbag/runtime/seedbag_core.py"):
+            with self.subTest(name=name):
+                self.g(self.root, "rm", "--cached", "--", name)
+                self.assertTrue((self.root / name).is_file())
+                self.assertTrue(git.validate_entry_files(self.root, core.load(self.root))["ok"])
+                with self.assertRaisesRegex(core.Error, "missing required files") as raised:
+                    git.gate(self.root)
+                self.assertIn(name, str(raised.exception))
+                self.g(self.root, "add", "--", name)
+        self.assertEqual(self.g(self.root, "rev-parse", "HEAD").strip(), self.initial)
+
+    def test_gate_rejects_staged_readme_prompt_mismatch_after_working_copy_repair(self):
+        path = self.root / "README.md"
+        original = path.read_bytes()
+        path.write_bytes(original.replace(b"Read its AGENTS.md", b"Read some other instructions", 1))
+        self.g(self.root, "add", "--", "README.md")
+        path.write_bytes(original)
+        with self.assertRaisesRegex(core.Error, "exact saved CONTINUE_HERE.md"):
+            git.gate(self.root)
+        self.assertEqual(path.read_bytes(), original)
+
+    def test_entry_files_reject_matching_prompt_with_another_repository(self):
+        original = self.remote.as_posix().encode("utf-8")
+        for name in ("README.md", "CONTINUE_HERE.md"):
+            path = self.root / name
+            path.write_bytes(path.read_bytes().replace(original, b"https://github.com/example/other-project"))
+        with self.assertRaisesRegex(core.Error, "saved repository locator"):
+            git.validate_entry_files(self.root, core.load(self.root))
+
+    def test_entry_files_reject_duplicate_or_multiline_prompt_blocks(self):
+        path = self.root / "README.md"
+        original = path.read_bytes()
+        for changed in (
+            original + b"\n<!-- seedbag:continue:start -->\n",
+            original.replace(b". Read its AGENTS.md", b".\nRead its AGENTS.md", 1),
+        ):
+            with self.subTest(contents=changed[-80:]):
+                path.write_bytes(changed)
+                with self.assertRaisesRegex(core.Error, "exactly one marked"):
+                    git.validate_entry_files(self.root, core.load(self.root))
+        path.write_bytes(original)
+
+    def test_prompt_file_cannot_be_rewritten_through_gate_or_committed_audit(self):
+        path = self.root / "CONTINUE_HERE.md"
+        original = path.read_bytes()
+        path.write_bytes(original + b"\nAn accidental replacement note.\n")
+        self.assertTrue(git.validate_entry_files(self.root, core.load(self.root))["ok"])
+        self.g(self.root, "add", "--", "CONTINUE_HERE.md")
+        with self.assertRaisesRegex(core.Error, "CONTINUE_HERE.md changed from parent/base"):
+            git.gate(self.root)
+        # Bypass the cooperative gate deliberately to prove committed audits
+        # enforce prompt stability independently of local hooks.
+        self.g(self.root, "commit", "-m", "Deliberately rewritten prompt fixture")
+        with self.assertRaisesRegex(core.Error, "CONTINUE_HERE.md changed from parent/base"):
+            git.audit_commit(self.root, "HEAD", self.initial)
+        self.assertEqual(self.g(self.remote, "rev-parse", "refs/heads/main").strip(), self.initial)
+
+    def test_publish_preserves_entry_bytes_and_complete_files_in_fresh_clone(self):
+        expected = {name: (self.root / name).read_bytes() for name in ("README.md", "CONTINUE_HERE.md")}
+        self.apply([{"op": "project.set", "purpose": "Continue the same project after a saved update"}])
+        git.publish(self.root, "Preserve permanent entry across update", CORE_FILES)
+        fresh = self.clone("entry-reader")
+        self.assertTrue(git.validate_entry_files(fresh, core.load(fresh))["ok"])
+        for name, contents in expected.items():
+            self.assertEqual((fresh / name).read_bytes(), contents)
 
     def test_gate_validates_index_not_repaired_working_view(self):
         self.apply([{"op": "project.set", "purpose": "Preserve a new purpose"}])

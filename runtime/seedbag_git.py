@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path, PurePosixPath
+import re
 import shlex
 import subprocess
 import sys
@@ -18,6 +19,19 @@ import seedbag_context as views
 
 Error = core.Error
 LEDGER = ".seedbag/ledger.json"
+REQUIRED_FILES = (
+    "README.md", "CONTINUE_HERE.md", "AGENTS.md", "FIRST_RUN.md",
+    "seedbag_setup.py", "seedbag.py", "SEEDBAG_LICENSE.txt",
+    ".seedbag/runtime/seedbag_core.py", ".seedbag/runtime/seedbag_context.py",
+    ".seedbag/runtime/seedbag_git.py", LEDGER, "PROJECT.md", "STATE.md",
+    ".gitignore", ".gitattributes",
+)
+_ENTRY_START = "<!-- seedbag:continue:start -->"
+_ENTRY_END = "<!-- seedbag:continue:end -->"
+_ENTRY_BLOCK = re.compile(
+    r"(?m)^" + re.escape(_ENTRY_START) + r"\n```text\n([^\r\n]+)\n```\n"
+    + re.escape(_ENTRY_END) + r"$"
+)
 
 
 def _git(root, *args, allow_failure=False, input_bytes=None, env=None):
@@ -99,6 +113,39 @@ def _validate_views(root, snapshot):
             raise Error(f"{name} does not match the ledger. Render generated views, then stage their exact versions.")
 
 
+def validate_entry_files(root, snapshot):
+    """Validate complete project files without importing or executing their code."""
+    root = Path(root)
+    missing = [name for name in REQUIRED_FILES if not _no_link(root, name).is_file()]
+    if missing:
+        raise Error("The project snapshot is missing required files: " + ", ".join(missing))
+    prompts = {}
+    for name in ("README.md", "CONTINUE_HERE.md"):
+        try:
+            contents = (root / name).read_bytes().decode("utf-8", "strict")
+        except UnicodeDecodeError as exc:
+            raise Error(f"{name} must be UTF-8 text.") from exc
+        blocks = list(_ENTRY_BLOCK.finditer(contents))
+        if contents.count(_ENTRY_START) != 1 or contents.count(_ENTRY_END) != 1 or len(blocks) != 1:
+            raise Error(f"{name} must contain exactly one marked, copyable continuation prompt block.")
+        paragraph = blocks[0][1]
+        if not paragraph.strip() or paragraph != paragraph.strip():
+            raise Error(f"{name} must contain one nonempty continuation paragraph without surrounding whitespace.")
+        prompts[name] = paragraph
+    paragraph = prompts["CONTINUE_HERE.md"]
+    if prompts["README.md"] != paragraph:
+        raise Error("README.md must contain the exact saved CONTINUE_HERE.md continuation prompt.")
+    prefix = "Continue my project at "
+    following = ". Read its AGENTS.md"
+    locator, separator, _ = paragraph.removeprefix(prefix).partition(following)
+    if not paragraph.startswith(prefix) or not separator or not locator.strip():
+        raise Error("CONTINUE_HERE.md must identify a project location and direct the assistant to its AGENTS.md.")
+    repository = snapshot["ledger"]["repository"]
+    if repository and not paragraph.startswith(prefix + repository + following):
+        raise Error("CONTINUE_HERE.md does not identify this project's saved repository locator.")
+    return {"ok": True, "continuation_prompt": paragraph}
+
+
 def _readiness(root, snapshot, incomplete):
     warnings = core.readiness(snapshot, root=root)
     blocking = [problem for problem in warnings if not (
@@ -157,6 +204,7 @@ def _audit_records(root, records, parents, incomplete):
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(_git(root, "cat-file", "blob", oid).stdout)
         snapshot = core.validate(staged)
+        validate_entry_files(staged, snapshot)
         checked = []
         for parent in dict.fromkeys(parents):
             old = _git(root, "show", f"{parent}:{LEDGER}", allow_failure=True)
@@ -171,6 +219,11 @@ def _audit_records(root, records, parents, incomplete):
                 core.validate_parent(staged, core.read_json(parent_file))
             except Error as exc:
                 raise Error(f"{exc}. The snapshot does not preserve parent/base {parent}. Keep both branches. Divergent event chains cannot both prefix one linear ledger: choose a lineage and replay reviewed changes there while preserving the other candidate, without claiming that both event histories were merged.") from exc
+            previous_prompt = _git(root, "show", f"{parent}:CONTINUE_HERE.md", allow_failure=True)
+            if previous_prompt.returncode:
+                raise Error(f"The permanent continuation prompt at parent/base {parent} cannot be verified.")
+            if previous_prompt.stdout != (staged / "CONTINUE_HERE.md").read_bytes():
+                raise Error(f"CONTINUE_HERE.md changed from parent/base {parent}. Preserve the permanent prompt unchanged during ordinary project work.")
             checked.append(parent)
         _validate_views(staged, snapshot)
         warnings = _readiness(staged, snapshot, incomplete)

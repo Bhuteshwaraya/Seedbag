@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.3
+
+Let a capable cloud conversation create and verify a private GitHub checkpoint before the project has a folder on the person's computer. The permanent continuation prompt now directs a local assistant to reuse an existing matching folder or clone the same repository, then continue from its own installed files. Setup guides distinguish cloud workspace, computer-local files, and verified shared checkpoints.
+
+Every new project receives a friendly README with recovery steps, links to goals and current progress, and its exact saved continuation prompt. The runtime checks that required planted files are present, both prompt blocks agree, the repository locator matches, and ordinary checkpoints preserve the continuation file. Missing recovery files cannot pass the publication gate. Existing projects remain unchanged.
+
 ## 0.3.2
 
 Add a first-time setup route for people without Git, Python, a GitHub account, or an existing connection. The assistant handles supported installation and configuration; the person receives only unavoidable account, consent, or OS actions. Distinguish missing tools, missing credentials, rejected credentials, denied networking, and broken Git transport through a read-only preflight helper. Preserve working connections and host rules. Planted projects carry the guide and helper for later devices and keep their existing repository.

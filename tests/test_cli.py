@@ -16,7 +16,7 @@ import unittest
 
 PACKAGE = Path(__file__).resolve().parents[1]
 SEED_FILES = [
-    "seedbag.py", "seedbag_setup.py", "FIRST_RUN.md", "SEEDBAG_LICENSE.txt", "AGENTS.md", "PROJECT.md", "STATE.md", "CONTINUE_HERE.md",
+    "seedbag.py", "seedbag_setup.py", "FIRST_RUN.md", "SEEDBAG_LICENSE.txt", "AGENTS.md", "PROJECT.md", "STATE.md", "README.md", "CONTINUE_HERE.md",
     ".gitignore", ".gitattributes", ".seedbag/ledger.json",
     ".seedbag/runtime/seedbag_core.py", ".seedbag/runtime/seedbag_context.py",
     ".seedbag/runtime/seedbag_git.py",
@@ -108,6 +108,13 @@ class InstalledCliTests(unittest.TestCase):
 
     def test_capture_rewrite_verification_publish_and_fresh_clone_use_installed_runtime(self):
         permanent_prompt = (self.root / 'CONTINUE_HERE.md').read_bytes()
+        recovery_page = (self.root / 'README.md').read_bytes()
+        prompt = permanent_prompt.split(b'```text\n', 1)[1].split(b'\n```', 1)[0]
+        self.assertIn(prompt, recovery_page)
+        self.assertIn(b'[Where things stand](STATE.md)', recovery_page)
+        self.assertIn(b'Disposable offline index', recovery_page)
+        self.assertIn(b'bring this same repository into a new local folder', prompt)
+        self.assertIn(b'cloud workspace', prompt)
         self.assertIn(self.remote.as_posix().encode('utf-8'), permanent_prompt)
         self.assertNotIn(b'python seedbag.py', permanent_prompt)
         self.capture("request", "Build an offline alphabetic index. Start with cards. Printing can wait until paper copies are requested.")
@@ -168,6 +175,7 @@ class InstalledCliTests(unittest.TestCase):
         self.assertEqual(after, before)
         self.assertEqual(after_raw, raw)
         self.assertEqual((fresh / 'CONTINUE_HERE.md').read_bytes(), permanent_prompt)
+        self.assertEqual((fresh / 'README.md').read_bytes(), recovery_page)
         for support in ("seedbag_setup.py", "FIRST_RUN.md"):
             self.assertEqual((fresh / support).read_bytes(), (PACKAGE / support).read_bytes())
         probe = subprocess.run([sys.executable, "-B", str(fresh / "seedbag_setup.py"), "--offline"],
@@ -182,6 +190,45 @@ class InstalledCliTests(unittest.TestCase):
         self.assertNotIn(str(PACKAGE / "runtime").replace("\\", "/"), installed_hook.replace("\\", "/"))
         current, _ = self.cli("doctor", root=fresh)
         self.assertTrue(current["ready"])
+
+    def test_unpublished_cloud_workspace_can_be_planted_and_recovered_locally(self):
+        cloud = self.base / "temporary-cloud-workspace"
+        planted, _ = self.cli("init", str(cloud), "--name", "Cloud-started project", "--repository",
+                              self.remote.as_posix(), "--no-git", package=True)
+        self.assertFalse(planted["git_initialized"])
+        self.assertFalse(planted["shared"])
+        self.g(cloud, "init", "--initial-branch=main")
+        self.g(cloud, "config", "--local", "user.name", "Seedbag CLI Fixture")
+        self.g(cloud, "config", "--local", "user.email", "fixture@example.invalid")
+        self.g(cloud, "remote", "add", "origin", str(self.remote))
+        self.cli("publish", "--message", "Cloud workspace checkpoint", "--paths", *SEED_FILES, root=cloud)
+        local = self.base / "later-computer-folder"
+        self.g(self.base, "clone", str(self.remote), str(local))
+        for path in SEED_FILES:
+            self.assertEqual((local / path).read_bytes(), (cloud / path).read_bytes(), path)
+        self.assertEqual(self.cli("context", root=local), self.cli("context", root=cloud))
+        self.assertTrue(self.cli("doctor", root=local)[0]["ready"])
+        self.cli("install-hook", root=local)
+
+    def test_doctor_reports_missing_recovery_file(self):
+        (self.root / "README.md").unlink()
+        report, _ = self.cli("doctor", expected=2)
+        self.assertFalse(report["ready"])
+        self.assertIn("README.md", " ".join(report["problems"]))
+
+    def test_local_only_recovery_page_does_not_claim_a_shared_repository(self):
+        local = self.base / "explicit-local-only"
+        planted, _ = self.cli("init", str(local), "--name", "Local notes", "--no-git", package=True)
+        self.assertFalse(planted["shared"])
+        self.assertFalse(planted["git_initialized"])
+        self.assertFalse((local / ".git").exists())
+        readme = (local / "README.md").read_text(encoding="utf-8")
+        prompt_file = (local / "CONTINUE_HERE.md").read_text(encoding="utf-8")
+        self.assertIn("no shared repository recorded", readme)
+        self.assertIn("no recorded shared repository", prompt_file)
+        self.assertNotIn("same private repository", prompt_file)
+        self.assertIn(str(local), prompt_file)
+        self.assertTrue(self.cli("doctor", root=local)[0]["ready"])
 
     def test_actual_commit_hook_refuses_manual_generated_view_without_creating_commit(self):
         publication, _ = self.cli("publish", "--message", "Initial fresh seed", "--paths", *SEED_FILES)

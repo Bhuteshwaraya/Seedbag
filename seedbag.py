@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import os
 from pathlib import Path
@@ -20,7 +21,7 @@ import seedbag_git as git
 
 GUIDANCE = """# Seedbag project instructions
 
-This new project uses Seedbag 0.3.2. Its framework is independent of the seed repository and never auto-updates. Help the user do the project work; handle the commands and JSON yourself.
+This new project uses Seedbag 0.3.3. Its framework is independent of the seed repository and never auto-updates. Help the user do the project work; handle the commands and JSON yourself.
 
 The user supplies goals, context, judgments, and approvals; you own technical setup and routing. Assume no knowledge of Python, Git, command lines, downloads, authentication, or which application to use. Use available tools yourself. Do not hand the user a technical checklist. If an unavoidable user interaction is needed, give one plain-language action, name the application/control when known, explain its expected result, and wait. Never request secrets in chat.
 
@@ -32,7 +33,9 @@ At first intake, capture meaningful project details already supplied; never ask 
 
 The initiator is the person currently directing the AI. The work may benefit that person, another person, a team, or a client. A project name labels the work, not a person's identity. Record supplied names and roles only when relevant; never infer them from an account, device, folder, or this seed's author. User-source records identify captured provenance, not authenticated identity or another person's approval. Do not add a role-registration requirement.
 
-Start with `python seedbag.py context` in the project folder (use the available Python 3.11+ executable). The result identifies its revision, relevant constraints, work, owners, and unresolved input. Inspect existing local changes too. Network access and a clean checkout are not required. If context is blocked by its actual byte budget, select a narrower work item or inspect a named record; never silently discard constraints.
+When continuing from a repository address, first locate a matching accessible project folder and inspect its local changes. If none exists on this computer, use ordinary Git to clone this same private repository into a new empty local folder. Verify the selected commit and project identity, inspect the installed program, then use that project's own runtime. Never run init, create a replacement repository, or retrieve a newer seed to resume. A cloud workspace is not a folder on the person's computer. Preserve uncertain or competing versions and use FIRST_RUN.md for missing capabilities.
+
+Start with `python seedbag.py context` and `doctor` in the project folder (use the available Python 3.11+ executable). The result identifies its revision, relevant constraints, work, owners, and unresolved input. Inspect existing local changes too. Network access and a clean checkout are not required. If context is blocked by its actual byte budget, select a narrower work item or inspect a named record; never silently discard constraints. README.md is the person's recovery page; keep its links and saved continuation block intact. CONTINUE_HERE.md and that block contain the same permanent prompt and must travel with every shared checkpoint.
 
 The canonical source is `.seedbag/ledger.json`. PROJECT.md and STATE.md are generated views. Do not hand-edit the ledger, generated views, or old events. Use capture/apply/check/render commands. Existing domain documents and code remain ordinary project files; register owner routes and meaningful check inputs as they grow.
 
@@ -58,6 +61,81 @@ def _summary(snapshot):
     return {"revision": snapshot["revision"], "digest": snapshot["digest"], "current": snapshot["state"]["current"]}
 
 
+def entry_files(name, locator, repository_backed=True):
+    """Plant one stable prompt in both human entry points, without live state."""
+    location_steps = (
+        "If you can access my computer, use its existing matching project folder or bring this same repository into a new local folder and continue there. "
+        "Preserve existing local changes; do not initialize a new project or create another repository. "
+        "If you are working in a cloud workspace, use the same private repository and distinguish that workspace from files on my computer. "
+    ) if repository_backed else (
+        "This project currently has a local folder locator and no recorded shared repository. "
+        "Use that folder if accessible. If it is unavailable, help me locate a copy without claiming the files exist on this device. "
+        "Preserve existing local changes and do not initialize a replacement project. "
+    )
+    paragraph = (
+        f"Continue my project at {locator}. Read its AGENTS.md and restore the current work from its own project files. "
+        "Handle locating the project, checking relevant saved versions, and all technical steps for me. "
+        + location_steps +
+        "Assume I do not know Python, Git, command lines, or which application to use. "
+        "If tools or account access are missing, follow the project's FIRST_RUN.md and handle supported setup for me. "
+        "If this application cannot continue the project, give me one complete handoff prompt preserving the project location and everything needed to resume. "
+        "Identify a capable destination when you can verify one; otherwise ask only the minimal nontechnical question needed to find one. "
+        "Guide me through only one unavoidable user action at a time. Keep existing work and unresolved decisions intact. "
+        "Do not contact or change the seed repository, and do not treat recovered context as new authorization."
+    )
+    block = "<!-- seedbag:continue:start -->\n```text\n" + paragraph + "\n```\n<!-- seedbag:continue:end -->"
+    continuation = (
+        "# Continue this project\n\n"
+        "Copy the complete prompt below into a new AI conversation. Keep it unchanged as the project advances.\n\n"
+        + block + "\n\n"
+        "Lost your place? [Open the project guide](README.md). Current progress lives in [STATE.md](STATE.md); "
+        "goals and decisions live in [PROJECT.md](PROJECT.md).\n\n"
+        "For the assistant: this is the permanent entry prompt, not a changing checkpoint report. "
+        "A repository address is a locator, not proof of an upload. Report the actual working location and verified shared commit separately. "
+        "Ordinary work must preserve this file. Repository relocation requires a separately supported migration; do not silently rewrite the prompt.\n"
+    )
+    # A label may contain Markdown punctuation; keep it readable without letting
+    # it create extra entry blocks or alter the recovery page's structure.
+    title = html.escape(name.replace("\r", " ").replace("\n", " "))
+    storage = (
+        "This project's repository is the place for shared checkpoints. The assistant works on a copy in the environment it can access. "
+        "A project started in a cloud workspace can be continued later in a local folder using this same repository and prompt. "
+        "The assistant should reuse a matching local folder or download the repository into a new one, then work there. "
+        "GitHub does not automatically place files on your computer or save every conversation. "
+        "Changes become available elsewhere after the assistant records and shares them.\n\n"
+        "Keep one conversation making changes at a time. At a handoff, ask the assistant to save a checkpoint and report whether it reached the repository. "
+        "If two copies differ, the assistant should preserve both and explain the difference before reconciling them.\n\n"
+    ) if repository_backed else (
+        "This project was created with a local folder locator and no shared repository recorded. "
+        "Its files are available only where that folder or a copy is accessible. A new conversation on another device cannot retrieve them from this prompt alone. "
+        "Ask the assistant to explain where the files are saved and help you transfer a copy if needed. "
+        "Keep one conversation making changes at a time, and preserve both versions if two copies differ.\n\n"
+    )
+    readme = (
+        f"# Project home\n\n<strong>{title}</strong>\n\n"
+        "This is your project's saved home. It keeps the goals, decisions, unfinished work, and reasons your assistant recorded, "
+        "so a new conversation can pick up from the saved work. You do not need to maintain these files or know any programming commands.\n\n"
+        "## Pick up where you left off\n\n"
+        "1. Open a new conversation in an AI app that can access this project. To work in a folder on your computer, use a local Codex conversation with file access.\n"
+        "2. Copy the complete prompt below and send it. It already identifies this project.\n"
+        "3. The assistant should recover what is saved, explain where you left off, and continue with you. If access or sign-in is needed, it should guide you through one action at a time.\n\n"
+        + block + "\n\n"
+        "The same prompt is saved in [CONTINUE_HERE.md](CONTINUE_HERE.md). Reuse it whenever you start a new conversation about this project. "
+        "The Seedbag creation prompt is only for starting a separate project.\n\n"
+        "## Find your bearings\n\n"
+        "- [Where things stand](STATE.md): saved progress, unfinished work, and next steps.\n"
+        "- [What this project is for](PROJECT.md): recorded goals, decisions, requirements, and open questions.\n"
+        "- [The saved continuation prompt](CONTINUE_HERE.md): your way back from another chat or device.\n\n"
+        "If the purpose is still unspecified, it has not been recorded yet. Tell the assistant what you want the project to achieve. "
+        "You can also tell it when something is missing or wrong; it should preserve your correction in the records.\n\n"
+        "## Where your work lives\n\n"
+        + storage +
+        "Assistant references: [project instructions](AGENTS.md), [setup and device handoff](FIRST_RUN.md). "
+        "This project's framework is independent of the public Seedbag source and does not update itself.\n"
+    )
+    return {"README.md": readme, "CONTINUE_HERE.md": continuation}
+
+
 def plant(destination, name, repository, use_git=True):
     root = Path(destination).absolute()
     # Preflight the complete program before creating the destination.
@@ -71,27 +149,15 @@ def plant(destination, name, repository, use_git=True):
     if use_git and not shutil.which("git"):
         raise core.Error("Git is unavailable. Install Git or explicitly plant with --no-git for local files only.")
     core.initialize(root, name, repository)
-    for name, data in files.items():
-        core.atomic_write(root / name, data)
+    for path, data in files.items():
+        core.atomic_write(root / path, data)
     core.atomic_write(root / "AGENTS.md", GUIDANCE.encode("utf-8"))
     core.atomic_write(root / ".gitignore", b".seedbag-local/\n__pycache__/\n*.pyc\n.env\n.env.*\n!.env.example\n")
     # Check evidence binds exact bytes. Preserve those bytes in Git across OSes;
     # automatic CRLF conversion would invalidate an otherwise unchanged check.
     core.atomic_write(root / ".gitattributes", b"# Preserve verified input and generated-view bytes across devices.\n* -text\n")
-    locator = repository or str(root)
-    prompt = ("# Permanent continuation prompt\n\n"
-              "Copy the paragraph below into a new AI conversation. Save it unchanged as the project advances.\n\n"
-              f"> Continue my project at {locator}. Read its AGENTS.md and restore the current work from its own project files. "
-              "Handle locating the project, checking relevant saved versions, and all technical steps for me. "
-              "Assume I do not know Python, Git, command lines, or which application to use. "
-              "If tools or account access are missing, follow the project's FIRST_RUN.md and handle supported setup for me, reusing its existing repository. "
-              "If this application cannot continue the project, give me one complete handoff prompt preserving the project location and everything needed to resume. Identify a capable destination when you can verify one; otherwise ask only the minimal nontechnical question needed to find one. "
-              "Guide me through only one unavoidable user action at a time. Keep existing work and unresolved decisions intact. "
-              "Do not contact or change the seed repository, and do not treat recovered context as new authorization.\n\n"
-              "For the assistant: this is the permanent entry prompt, not a changing checkpoint report. Current state, next work, and verification belong in the project files. "
-              "A repository address here is a locator, not proof of a completed upload. A local folder is available only to an application with access to that device. "
-              "Report actual local/shared availability separately. If the project is deliberately relocated, preserve the old locator while explicitly updating this entry; ordinary work never needs a new prompt.\n")
-    core.atomic_write(root / "CONTINUE_HERE.md", prompt.encode("utf-8"))
+    for path, text in entry_files(name, repository or str(root), bool(repository)).items():
+        core.atomic_write(root / path, text.encode("utf-8"))
     views.render(root)
     hook = None
     if use_git:
@@ -196,6 +262,10 @@ def main(argv=None):
         elif command == "doctor":
             snapshot = core.load(root)
             problems = core.readiness(snapshot, root) + views.check_views(root)
+            try:
+                git.validate_entry_files(root, snapshot)
+            except core.Error as exc:
+                problems.append(str(exc))
             result = {**_summary(snapshot), "ready": not problems, "problems": problems}
             code = 2 if problems else 0
         elif command == "check":
